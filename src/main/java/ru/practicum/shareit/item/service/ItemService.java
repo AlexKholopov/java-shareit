@@ -48,7 +48,7 @@ public class ItemService {
         return itemRepository.searchItems(text).stream().map(DtoMapper::mapToDto).collect(Collectors.toList());
     }
 
-    public ItemDto getItemById(long id){
+    public ItemDto getItemById(long id) {
         return DtoMapper.mapToDto(itemRepository.getItemById(id));
     }
 }

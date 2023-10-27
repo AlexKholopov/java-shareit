@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class InMemoryItemRepository implements ItemRepository {
     private long idCount = 1;
     private final Map<Long, Item> items = new HashMap<>();
+
     @Override
     public Item createItem(Item item) {
         item.setId(idCount++);
