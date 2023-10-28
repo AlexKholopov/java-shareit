@@ -16,9 +16,6 @@ import ru.practicum.shareit.user.service.UserService;
 import javax.validation.Valid;
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController

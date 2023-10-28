@@ -30,22 +30,6 @@ public class InMemoryItemRepository implements ItemRepository {
             log.error("Updating item fail, item id {} not found", item.getId());
             throw new NotFoundException(String.format("Item with id %d not found", item.getId()));
         }
-        Item oldItem = getItemById(item.getId());
-        if (item.getAvailable() == null) {
-            item.setAvailable(oldItem.getAvailable());
-        } else {
-            log.info("Available update requested");
-        }
-        if (item.getName() == null) {
-            item.setName(oldItem.getName());
-        } else {
-            log.info("Name update requested");
-        }
-        if (item.getDescription() == null) {
-            item.setDescription(oldItem.getDescription());
-        } else {
-            log.info("Description update requested");
-        }
         items.replace(item.getId(), item);
         log.info("Item successfully updated");
         return item;
@@ -70,13 +54,17 @@ public class InMemoryItemRepository implements ItemRepository {
     @Override
     public List<Item> getItemsByUserId(long owner) {
         log.info("Successful items by user id {} request", owner);
-        return items.values().stream().filter(i -> i.getOwner() == owner).collect(Collectors.toList());
+        return items.values().stream()
+                .filter(i -> i.getOwner() == owner)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<Item> searchItems(String text) {
         log.info("Successful items like {} request", text.toLowerCase());
-        return items.values().stream().filter(i -> i.getName().toLowerCase().contains(text.toLowerCase()) && i.getAvailable() ||
-                i.getDescription().toLowerCase().contains(text.toLowerCase()) && i.getAvailable()).collect(Collectors.toList());
+        return items.values().stream()
+                .filter(i -> i.getName().toLowerCase().contains(text.toLowerCase()) && i.getAvailable() ||
+                        i.getDescription().toLowerCase().contains(text.toLowerCase()) && i.getAvailable())
+                .collect(Collectors.toList());
     }
 }

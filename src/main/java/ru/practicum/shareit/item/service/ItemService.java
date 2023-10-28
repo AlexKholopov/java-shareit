@@ -22,8 +22,8 @@ public class ItemService {
 
     public ItemDto createItem(ItemDto itemDto, long owner) {
         userRepository.getUserById(owner);
-        Item item = itemRepository.createItem(DtoMapper.mapFromDto(itemDto, owner));
-        return DtoMapper.mapToDto(item);
+        Item item = itemRepository.createItem(ItemMapper.createFromDto(itemDto, owner));
+        return ItemMapper.mapToDto(item);
     }
 
     public ItemDto updateItem(ItemDto itemDto, long owner) {
@@ -32,12 +32,14 @@ public class ItemService {
             log.error("Unauthorized update attempt");
             throw new NoAuthorizationException("You do not have authorization to update the object");
         }
-        Item item1 = itemRepository.updateItem(DtoMapper.mapFromDto(itemDto, owner));
-        return DtoMapper.mapToDto(item1);
+        Item item1 = itemRepository.updateItem(ItemMapper.updateFromDto(itemDto, owner, item));
+        return ItemMapper.mapToDto(item1);
     }
 
     public List<ItemDto> getUserItems(long owner) {
-        return itemRepository.getItemsByUserId(owner).stream().map(DtoMapper::mapToDto).collect(Collectors.toList());
+        return itemRepository.getItemsByUserId(owner).stream()
+                .map(ItemMapper::mapToDto)
+                .collect(Collectors.toList());
     }
 
     public List<ItemDto> searchItems(String text) {
@@ -45,10 +47,12 @@ public class ItemService {
             log.info("Empty search request");
             return Collections.emptyList();
         }
-        return itemRepository.searchItems(text).stream().map(DtoMapper::mapToDto).collect(Collectors.toList());
+        return itemRepository.searchItems(text).stream()
+                .map(ItemMapper::mapToDto)
+                .collect(Collectors.toList());
     }
 
     public ItemDto getItemById(long id) {
-        return DtoMapper.mapToDto(itemRepository.getItemById(id));
+        return ItemMapper.mapToDto(itemRepository.getItemById(id));
     }
 }

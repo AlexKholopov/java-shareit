@@ -11,15 +11,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.headers.Header;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -28,14 +26,14 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ItemDto createItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") long owner) {
+    public ItemDto createItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader(Header.USER_ID) long owner) {
         log.info("Requested creating item");
         return itemService.createItem(itemDto, owner);
     }
 
     @PatchMapping("/{itemId}")
     public ItemDto updateItem(@RequestBody ItemDto itemDto,
-                              @RequestHeader("X-Sharer-User-Id") long owner,
+                              @RequestHeader(Header.USER_ID) long owner,
                               @PathVariable long itemId) {
         log.info("Requested item with id {} update", itemDto.getId());
         if (itemDto.getId() == 0) {
@@ -46,7 +44,7 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getUsersItems(@RequestHeader("X-Sharer-User-Id") long owner) {
+    public List<ItemDto> getUsersItems(@RequestHeader(Header.USER_ID) long owner) {
         log.info("Requested all user {} items", owner);
         return itemService.getUserItems(owner);
     }
