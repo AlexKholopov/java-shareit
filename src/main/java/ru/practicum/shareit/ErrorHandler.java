@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NoAuthorizationException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
@@ -32,6 +33,13 @@ public class ErrorHandler {
     @ExceptionHandler(NoAuthorizationException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Map<String, String> noAuthorizationException(final Exception e) {
+        log.error(e.getMessage(), e);
+        return Map.of("Error", e.getMessage());
+    }
+
+    @ExceptionHandler(LockedException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> lockedException(final Exception e) {
         log.error(e.getMessage(), e);
         return Map.of("Error", e.getMessage());
     }
