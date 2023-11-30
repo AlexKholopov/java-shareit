@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
+
     @PostMapping
     public BookingDto addBooking(@RequestBody BookingIncome bookingIncome, @RequestHeader(Header.USER_ID) long user) {
         return bookingService.addBooking(bookingIncome, user);
