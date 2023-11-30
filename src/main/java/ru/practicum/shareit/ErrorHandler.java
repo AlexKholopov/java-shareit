@@ -20,27 +20,28 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> validationException(final Exception e) {
         log.error(e.getMessage(), e);
-        return Map.of("Error", e.getMessage());
+        return Map.of("error", e.getMessage());
     }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> notFoundException(final Exception e) {
         log.error(e.getMessage(), e);
-        return Map.of("Error", e.getMessage());
+        return Map.of("error", e.getMessage());
     }
 
     @ExceptionHandler(NoAuthorizationException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Map<String, String> noAuthorizationException(final Exception e) {
         log.error(e.getMessage(), e);
-        return Map.of("Error", e.getMessage());
+        return Map.of("error", e.getMessage());
     }
 
     @ExceptionHandler(LockedException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> lockedException(final Exception e) {
         log.error(e.getMessage(), e);
-        return Map.of("Error", e.getMessage());
+        return Map.of("error", e.getMessage());
     }
 }
+

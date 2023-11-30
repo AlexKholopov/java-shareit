@@ -47,7 +47,7 @@ public class ItemService {
             throw new NotFoundException("No such owner was found");
         }
         Item item = itemRepository.save(itemMapper.toModel(itemDto, owner));
-        return itemMapper.toDTO(item);
+        return itemMapper.toDTO(item, Collections.emptyList());
     }
 
     public ItemDto updateItem(ItemDto itemDto, long owner) {
@@ -64,11 +64,15 @@ public class ItemService {
         itemDto.setDescription(itemDto.getDescription() == null ? item.getDescription() : itemDto.getDescription());
         itemDto.setAvailable(itemDto.getAvailable() == null ? item.getAvailable() : itemDto.getAvailable());
         Item item1 = itemRepository.save(itemMapper.toModel(itemDto, owner));
-        return itemMapper.toDTO(item1);
+        var comments = commentRepository.findByItem(item1).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+        return itemMapper.toDTO(item1, comments);
     }
 
     public List<ItemDto> getUserItems(long owner) {
-        var items = itemRepository.findByOwner(owner).stream().map(itemMapper::toDTO).sorted(Comparator.comparingLong(ItemDto::getId)).collect(Collectors.toList());
+        var items = itemRepository.findByOwner(owner).stream().map((it) -> {
+            var comments = commentRepository.findByItem(it).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+            return itemMapper.toDTO(it, comments);
+        }).sorted(Comparator.comparingLong(ItemDto::getId)).collect(Collectors.toList());
         items.forEach(it -> {
             var bookings = findBookings(it, owner);
             it.setLastBooking(bookings.get(0));
@@ -83,13 +87,17 @@ public class ItemService {
             return Collections.emptyList();
         }
         return itemRepository.findByAvailableTrueAndNameContainingIgnoreCaseOrAvailableTrueAndDescriptionContainingIgnoreCase(text, text).stream()
-                .map(itemMapper::toDTO)
+                .map((it) -> {
+                    var comments = commentRepository.findByItem(it).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+                    return itemMapper.toDTO(it, comments);
+                })
                 .collect(Collectors.toList());
     }
 
     public ItemDto getItemById(long id, long userId) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new NotFoundException("No such item was found"));
-        ItemDto itemDto = itemMapper.toDTO(item);
+        var comments = commentRepository.findByItem(item).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+        ItemDto itemDto = itemMapper.toDTO(item, comments);
         if (item.getOwner() == userId) {
             var bookings = findBookings(itemDto, userId);
             itemDto.setLastBooking(bookings.get(0));
@@ -108,7 +116,7 @@ public class ItemService {
             throw new LockedException("No bookings by that user was found");
         }
         commentDto.setCreated(LocalDateTime.now());
-        Comment comment = commentMapper.fromDTO(commentDto, user);
+        Comment comment = commentMapper.fromDTO(commentDto, user, item);
         commentRepository.save(comment);
         return commentMapper.toDTO(comment);
     }
@@ -116,7 +124,7 @@ public class ItemService {
     private List<BookingForItem> findBookings(ItemDto it, long owner) {
         BookingDto lastBooking = bookingRepository.findByItem(itemMapper.toModel(it, owner)).stream()
                 .sorted(Comparator.comparingLong(booking -> -booking.getEnd().toInstant(ZoneOffset.UTC).toEpochMilli()))
-                .filter(booking -> booking.getEnd().isBefore(LocalDateTime.now()))
+                .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
                 .filter(booking -> booking.getStatus().equals(Status.APPROVED))
                 .map(bookingMapper::toDTO)
                 .findFirst().orElse(null);
