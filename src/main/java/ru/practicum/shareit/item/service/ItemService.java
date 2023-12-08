@@ -3,7 +3,6 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingForItem;
@@ -27,8 +26,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -64,44 +66,89 @@ public class ItemService {
         itemDto.setDescription(itemDto.getDescription() == null ? item.getDescription() : itemDto.getDescription());
         itemDto.setAvailable(itemDto.getAvailable() == null ? item.getAvailable() : itemDto.getAvailable());
         Item item1 = itemRepository.save(itemMapper.toModel(itemDto, owner));
-        var comments = commentRepository.findByItem(item1).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+        var comments = commentRepository.findByItem(item1).stream().map(commentMapper::toDTO).collect(toList());
         return itemMapper.toDTO(item1, comments);
     }
 
     public List<ItemDto> getUserItems(long owner) {
-        var items = itemRepository.findByOwner(owner).stream().map((it) -> {
-            var comments = commentRepository.findByItem(it).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+        var items = itemRepository.findByOwner(owner);
+
+        Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartBeforeAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
+                .map(bookingMapper::toDTO)
+                .sorted(Comparator.comparing(it -> -it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
+                .collect(Collectors.groupingBy(it -> it.getItem().getId(), toList()));
+        Map<Long, List<BookingDto>> map2 = bookingRepository.findByItemInAndStartAfterAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
+                .map(bookingMapper::toDTO)
+                .sorted(Comparator.comparing(it -> it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
+                .collect(Collectors.groupingBy(it -> it.getItem().getId(), toList()));
+
+        var itemsDto = items.stream().map((it) -> {
+            var comments = commentRepository.findByItem(it).stream().map(commentMapper::toDTO).collect(toList());
             return itemMapper.toDTO(it, comments);
-        }).sorted(Comparator.comparingLong(ItemDto::getId)).collect(Collectors.toList());
-        items.forEach(it -> {
-            var bookings = findBookings(it, owner);
-            it.setLastBooking(bookings.get(0));
-            it.setNextBooking(bookings.get(1));
+        }).sorted(Comparator.comparingLong(ItemDto::getId)).collect(toList());
+        itemsDto.forEach(it -> {
+            if (!map.isEmpty() && map.get(it.getId()) != null) {
+                BookingDto bookingDto = map.get(it.getId()).get(0);
+                if (bookingDto == null) {
+                    it.setLastBooking(null);
+                } else {
+                    BookingForItem booking = new BookingForItem(bookingDto.getId(), bookingDto.getBooker().getId());
+                    it.setLastBooking(booking);
+                }
+            }
+            if (!map2.isEmpty() && map.get(it.getId()) != null) {
+                BookingDto bookingDto = map2.get(it.getId()).get(0);
+                if (bookingDto == null) {
+                    it.setNextBooking(null);
+                } else {
+                    BookingForItem booking = new BookingForItem(bookingDto.getId(), bookingDto.getBooker().getId());
+                    it.setNextBooking(booking);
+                }
+            }
         });
-        return items;
+
+        return itemsDto;
     }
 
     public List<ItemDto> searchItems(String text) {
-        if (text.isBlank() || text.isEmpty()) {
+        if (text.isBlank()) {
             log.info("Empty search request");
             return Collections.emptyList();
         }
-        return itemRepository.findByAvailableTrueAndNameContainingIgnoreCaseOrAvailableTrueAndDescriptionContainingIgnoreCase(text, text).stream()
-                .map((it) -> {
-                    var comments = commentRepository.findByItem(it).stream().map(commentMapper::toDTO).collect(Collectors.toList());
-                    return itemMapper.toDTO(it, comments);
-                })
-                .collect(Collectors.toList());
+        var items = itemRepository.findByAvailableTrueAndNameContainingIgnoreCaseOrAvailableTrueAndDescriptionContainingIgnoreCase(text, text);
+        Map<Long, List<CommentDto>> comments = commentRepository.findByItemIn(items)
+                .stream()
+                .sorted(Comparator.comparingLong(it -> it.getCreated().toInstant(ZoneOffset.UTC).toEpochMilli()))
+                .map(commentMapper::toDTO)
+                .collect(Collectors.groupingBy(CommentDto::getId, toList()));
+        List<ItemDto> result = new ArrayList<>();
+        items.forEach(item -> {
+            result.add(itemMapper.toDTO(item, comments.get(item.getId())));
+        });
+        return result;
     }
 
     public ItemDto getItemById(long id, long userId) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new NotFoundException("No such item was found"));
-        var comments = commentRepository.findByItem(item).stream().map(commentMapper::toDTO).collect(Collectors.toList());
+        var comments = commentRepository.findByItem(item).stream().map(commentMapper::toDTO).collect(toList());
         ItemDto itemDto = itemMapper.toDTO(item, comments);
         if (item.getOwner() == userId) {
-            var bookings = findBookings(itemDto, userId);
-            itemDto.setLastBooking(bookings.get(0));
-            itemDto.setNextBooking(bookings.get(1));
+            List<BookingDto> list = bookingRepository.findByItemAndStartBeforeAndStatus(item, LocalDateTime.now(), Status.APPROVED).stream()
+                    .map(bookingMapper::toDTO)
+                    .sorted(Comparator.comparing(it -> -it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
+                    .collect(toList());
+            List<BookingDto> list2 = bookingRepository.findByItemAndStartAfterAndStatus(item, LocalDateTime.now(), Status.APPROVED).stream()
+                    .map(bookingMapper::toDTO)
+                    .sorted(Comparator.comparing(it -> it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
+                    .collect(toList());
+            if (!list.isEmpty()) {
+                BookingForItem booking = new BookingForItem(list.get(0).getId(), list.get(0).getBooker().getId());
+                itemDto.setLastBooking(booking);
+            }
+            if (!list2.isEmpty()) {
+                BookingForItem booking = new BookingForItem(list2.get(0).getId(), list2.get(0).getBooker().getId());
+                itemDto.setNextBooking(booking);
+            }
         }
         return itemDto;
     }
@@ -109,36 +156,13 @@ public class ItemService {
     public CommentDto addComment(long itemId, long userId, CommentDto commentDto) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("No such item was found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("No such user was found"));
-        List<Booking> bookings = bookingRepository.findAcceptedByBookerAndItem(user, item).stream()
-                .filter(it -> it.getStart().isBefore(LocalDateTime.now()))
-                .collect(Collectors.toList());
-        if (bookings.isEmpty()) {
+        boolean exists = bookingRepository.existsAcceptedByBookerAndItemAndTime(user, item, LocalDateTime.now());
+        if (!exists) {
             throw new LockedException("No bookings by that user was found");
         }
         commentDto.setCreated(LocalDateTime.now());
         Comment comment = commentMapper.fromDTO(commentDto, user, item);
         commentRepository.save(comment);
         return commentMapper.toDTO(comment);
-    }
-
-    private List<BookingForItem> findBookings(ItemDto it, long owner) {
-        BookingDto lastBooking = bookingRepository.findByItem(itemMapper.toModel(it, owner)).stream()
-                .sorted(Comparator.comparingLong(booking -> -booking.getEnd().toInstant(ZoneOffset.UTC).toEpochMilli()))
-                .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
-                .filter(booking -> booking.getStatus().equals(Status.APPROVED))
-                .map(bookingMapper::toDTO)
-                .findFirst().orElse(null);
-        BookingDto nextBooking = bookingRepository.findByItem(itemMapper.toModel(it, owner)).stream()
-                .sorted(Comparator.comparingLong(booking -> booking.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
-                .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
-                .filter(booking -> booking.getStatus().equals(Status.APPROVED))
-                .map(bookingMapper::toDTO)
-                .findFirst().orElse(null);
-        BookingForItem last = lastBooking == null ? null : new BookingForItem(lastBooking.getId(), lastBooking.getBooker().getId());
-        BookingForItem next = nextBooking == null ? null : new BookingForItem(nextBooking.getId(), nextBooking.getBooker().getId());
-        var bookings = new ArrayList<BookingForItem>();
-        bookings.add(last);
-        bookings.add(next);
-        return bookings;
     }
 }

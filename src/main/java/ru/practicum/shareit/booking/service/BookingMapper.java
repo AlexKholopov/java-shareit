@@ -6,8 +6,8 @@ import org.mapstruct.Mapping;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingIncome;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.item.model.dto.ItemShort;
+import ru.practicum.shareit.user.model.UserId;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface BookingMapper {
@@ -16,8 +16,8 @@ public interface BookingMapper {
 
     BookingDto toDTO(Booking booking);
 
-    @Mapping(target = "id", source = "bookingIncome.id")
+    @Mapping(target = "id", source = "id")
     @Mapping(target = "item", source = "item")
     @Mapping(target = "booker", source = "user")
-    BookingDto fromIncome(BookingIncome bookingIncome, Item item, User user);
+    BookingDto fromIncome(BookingIncome bookingIncome, ItemShort item, UserId user, long id);
 }

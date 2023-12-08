@@ -11,7 +11,9 @@ import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.item.service.ItemMapper;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.model.UserId;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -28,10 +30,11 @@ public class BookingService {
     private final BookingMapper bookingMapper;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final ItemMapper itemMapper;
 
     public BookingDto addBooking(BookingIncome bookingIncome, long userId) {
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException("No such user was found"));
-        User booker = new User();
+        UserId booker = new UserId();
         booker.setId(userId);
         checkValidBookingTime(bookingIncome);
         Item item = itemRepository.findById(bookingIncome.getItemId()).orElseThrow(() -> new NotFoundException("No such item was found"));
@@ -41,14 +44,14 @@ public class BookingService {
         if (!item.getAvailable()) {
             throw new LockedException("Item not available");
         }
-        BookingDto bookingDto = bookingMapper.fromIncome(bookingIncome, item, booker);
+        BookingDto bookingDto = bookingMapper.fromIncome(bookingIncome, itemMapper.toShort(item), booker, 0);
         bookingDto.setStatus(Status.WAITING);
         Booking booking = bookingMapper.fromDTO(bookingDto);
-        bookingRepository.save(booking);
-        return bookingMapper.toDTO(booking);
+        Booking bookingFromDb = bookingRepository.save(booking);
+        return bookingMapper.toDTO(bookingFromDb);
     }
 
-    public BookingDto approveBooking(long bookingId, String approved, long userId) {
+    public BookingDto approveBooking(long bookingId, boolean approved, long userId) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException("No such booking was found"));
         Item item = itemRepository.findById(booking.getItem().getId()).orElseThrow(() -> new NotFoundException("No such item was found"));
         if (item.getOwner() != userId) {
@@ -58,15 +61,10 @@ public class BookingService {
             throw new LockedException("You cant change status twice");
         }
         Status status;
-        switch (approved) {
-            case "true":
-                status = Status.APPROVED;
-                break;
-            case "false":
-                status = Status.REJECTED;
-                break;
-            default:
-                throw new LockedException("Bad request");
+        if (approved) {
+            status = Status.APPROVED;
+        } else {
+            status = Status.REJECTED;
         }
         booking.setStatus(status);
         bookingRepository.save(booking);
