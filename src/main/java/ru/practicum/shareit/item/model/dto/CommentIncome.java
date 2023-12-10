@@ -3,14 +3,13 @@ package ru.practicum.shareit.item.model.dto;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Data
-public class CommentDto {
-
-    private long id;
-    private String authorName;
+public class CommentIncome {
+    @NotNull
     @NotBlank
+    @Size(max = 1000)
     private String text;
-    private LocalDateTime created;
 }

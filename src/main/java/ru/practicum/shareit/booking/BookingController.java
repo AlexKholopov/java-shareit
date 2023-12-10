@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,18 +14,22 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingIncome;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.headers.Header;
+import ru.practicum.shareit.utils.Header;
+import ru.practicum.shareit.utils.Marker;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/bookings")
+@Validated
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    public BookingDto addBooking(@RequestBody BookingIncome bookingIncome, @RequestHeader(Header.USER_ID) long user) {
+    @Validated(Marker.OnCreate.class)
+    public BookingDto addBooking(@RequestBody @Valid BookingIncome bookingIncome, @RequestHeader(Header.USER_ID) long user) {
         return bookingService.addBooking(bookingIncome, user);
     }
 

@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.model.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -17,38 +18,36 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public User createUser(User user) {
-        return userRepository.save(user);
+    public UserDto createUser(UserDto user) {
+        return userMapper.toDto(userRepository.save(userMapper.fromDto(user)));
     }
 
-    public User updateUser(User user, long id) {
+    public UserDto updateUser(UserDto user, long id) {
         if (id < 1) {
             log.error("Wrong user id - {}", user.getId());
             throw new ValidationException("User id must be positive");
         }
-        User oldUser = userRepository.findById(id).orElseThrow();
+        User oldUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));
         user.setId(id);
-        user.setName(user.getName() == null ? oldUser.getName() : user.getName());
-        user.setEmail(user.getEmail() == null ? oldUser.getEmail() : user.getEmail());
-        return userRepository.save(user);
+        if (user.getName() == null || user.getName().isBlank()) user.setName(oldUser.getName());
+        else user.setName(user.getName());
+        if (user.getEmail() == null || user.getEmail().isBlank()) user.setEmail(oldUser.getEmail());
+        else user.setEmail(user.getEmail());
+        return userMapper.toDto(userRepository.save(userMapper.fromDto(user)));
     }
 
     public void deleteUser(long id) {
-        User user = getUserById(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));
         userRepository.delete(user);
     }
 
-    public User getUserById(long id) {
-        Optional<User> maybeUser = userRepository.findById(id);
-        if (maybeUser.isPresent()) {
-            return maybeUser.get();
-        } else {
-            throw new NotFoundException("No such user was found");
-        }
+    public UserDto getUserById(long id) {
+        return userMapper.toDto(userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found")));
     }
 
-    public List<User> getUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getUsers() {
+        return userRepository.findAll().stream().map(userMapper::toDto).collect(Collectors.toList());
     }
 }

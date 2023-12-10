@@ -11,10 +11,13 @@ import ru.practicum.shareit.booking.service.BookingMapper;
 import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NoAuthorizationException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.CommentDto;
+import ru.practicum.shareit.item.model.dto.CommentIncome;
 import ru.practicum.shareit.item.model.dto.ItemDto;
+import ru.practicum.shareit.item.model.dto.ItemIncome;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
@@ -44,34 +47,33 @@ public class ItemService {
     private final ItemMapper itemMapper;
     private final BookingMapper bookingMapper;
 
-    public ItemDto createItem(ItemDto itemDto, long owner) {
-        if (userRepository.findById(owner).isEmpty()) {
-            throw new NotFoundException("No such owner was found");
-        }
-        Item item = itemRepository.save(itemMapper.toModel(itemDto, owner));
+    public ItemDto createItem(ItemIncome itemIncome, long owner) {
+        User user = userRepository.findById(owner).orElseThrow(() -> new NotFoundException("No such owner was found"));
+        Item item = itemRepository.save(itemMapper.toModel(itemIncome, user));
         return itemMapper.toDTO(item, Collections.emptyList());
     }
 
-    public ItemDto updateItem(ItemDto itemDto, long owner) {
-        Optional<Item> maybeItem = itemRepository.findById(itemDto.getId());
+    public ItemDto updateItem(ItemIncome itemIncome, long owner) {
+        Optional<Item> maybeItem = itemRepository.findById(itemIncome.getId());
         if (maybeItem.isEmpty()) {
             throw new NotFoundException("No such item was found");
         }
         Item item = maybeItem.get();
-        if (item.getOwner() != owner) {
+        if (item.getOwner().getId() != owner) {
             log.error("Unauthorized update attempt");
             throw new NoAuthorizationException("You do not have authorization to update the object");
         }
-        itemDto.setName(itemDto.getName() == null ? item.getName() : itemDto.getName());
-        itemDto.setDescription(itemDto.getDescription() == null ? item.getDescription() : itemDto.getDescription());
-        itemDto.setAvailable(itemDto.getAvailable() == null ? item.getAvailable() : itemDto.getAvailable());
-        Item item1 = itemRepository.save(itemMapper.toModel(itemDto, owner));
+        itemIncome.setName(itemIncome.getName() == null ? item.getName() : itemIncome.getName());
+        itemIncome.setDescription(itemIncome.getDescription() == null ? item.getDescription() : itemIncome.getDescription());
+        itemIncome.setAvailable(itemIncome.getAvailable() == null ? item.getAvailable() : itemIncome.getAvailable());
+        Item item1 = itemRepository.save(itemMapper.toModel(itemIncome, item.getOwner()));
         var comments = commentRepository.findByItem(item1).stream().map(commentMapper::toDTO).collect(toList());
         return itemMapper.toDTO(item1, comments);
     }
 
     public List<ItemDto> getUserItems(long owner) {
-        var items = itemRepository.findByOwner(owner);
+        User user = userRepository.findById(owner).orElseThrow(() -> new ValidationException("No such user was found"));
+        var items = itemRepository.findByOwner(user);
 
         Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartBeforeAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
                 .map(bookingMapper::toDTO)
@@ -115,7 +117,7 @@ public class ItemService {
             log.info("Empty search request");
             return Collections.emptyList();
         }
-        var items = itemRepository.findByAvailableTrueAndNameContainingIgnoreCaseOrAvailableTrueAndDescriptionContainingIgnoreCase(text, text);
+        var items = itemRepository.findByText(text, text);
         Map<Long, List<CommentDto>> comments = commentRepository.findByItemIn(items)
                 .stream()
                 .sorted(Comparator.comparingLong(it -> it.getCreated().toInstant(ZoneOffset.UTC).toEpochMilli()))
@@ -132,7 +134,7 @@ public class ItemService {
         Item item = itemRepository.findById(id).orElseThrow(() -> new NotFoundException("No such item was found"));
         var comments = commentRepository.findByItem(item).stream().map(commentMapper::toDTO).collect(toList());
         ItemDto itemDto = itemMapper.toDTO(item, comments);
-        if (item.getOwner() == userId) {
+        if (item.getOwner().getId() == userId) {
             List<BookingDto> list = bookingRepository.findByItemAndStartBeforeAndStatus(item, LocalDateTime.now(), Status.APPROVED).stream()
                     .map(bookingMapper::toDTO)
                     .sorted(Comparator.comparing(it -> -it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
@@ -153,15 +155,15 @@ public class ItemService {
         return itemDto;
     }
 
-    public CommentDto addComment(long itemId, long userId, CommentDto commentDto) {
+    public CommentDto addComment(long itemId, long userId, CommentIncome commentIncome) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("No such item was found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("No such user was found"));
         boolean exists = bookingRepository.existsAcceptedByBookerAndItemAndTime(user, item, LocalDateTime.now());
         if (!exists) {
             throw new LockedException("No bookings by that user was found");
         }
-        commentDto.setCreated(LocalDateTime.now());
-        Comment comment = commentMapper.fromDTO(commentDto, user, item);
+        Comment comment = commentMapper.fromIncome(commentIncome, user, item, null);
+        comment.setCreated(LocalDateTime.now());
         commentRepository.save(comment);
         return commentMapper.toDTO(comment);
     }
