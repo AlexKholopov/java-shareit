@@ -133,7 +133,7 @@ public class ItemService {
         var comments = commentRepository.findByItem(item).stream().map(commentMapper::toDTO).collect(toList());
         ItemDto itemDto = itemMapper.toDTO(item, comments);
         if (item.getOwner().getId() == userId) {
-            List<BookingDto> list = bookingRepository.findByItemAndStartBeforeAndStatus(item, LocalDateTime.now(), Status.APPROVED).stream()
+            List<BookingDto> list = bookingRepository.findByItemAndStartLessThanEqualAndStatus(item, LocalDateTime.now(), Status.APPROVED).stream()
                     .map(bookingMapper::toDTO)
                     .sorted(Comparator.comparing(it -> -it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
                     .collect(toList());

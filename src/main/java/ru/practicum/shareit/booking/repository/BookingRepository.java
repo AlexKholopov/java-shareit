@@ -45,7 +45,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByItemInAndStartAfterAndStatus(Collection<Item> items, LocalDateTime start, Status approved);
 
-    List<Booking> findByItemAndStartBeforeAndStatus(Item item, LocalDateTime start, Status approved);
+    List<Booking> findByItemAndStartLessThanEqualAndStatus(Item item, LocalDateTime start, Status approved);
 
     List<Booking> findByItemAndStartAfterAndStatus(Item item, LocalDateTime start, Status approved);
 
