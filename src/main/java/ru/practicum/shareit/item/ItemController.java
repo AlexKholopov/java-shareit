@@ -32,15 +32,13 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    @Validated(Marker.OnCreate.class)
-    public ItemDto createItem(@RequestBody @Valid ItemIncome itemIncome, @RequestHeader(Header.USER_ID) long owner) {
+    public ItemDto createItem(@RequestBody @Validated(Marker.OnCreate.class) ItemIncome itemIncome, @RequestHeader(Header.USER_ID) long owner) {
         log.info("Requested creating item");
         return itemService.createItem(itemIncome, owner);
     }
 
     @PatchMapping("/{itemId}")
-    @Validated(Marker.OnUpdate.class)
-    public ItemDto updateItem(@RequestBody @Valid ItemIncome itemIncome,
+    public ItemDto updateItem(@RequestBody @Validated(Marker.OnUpdate.class) ItemIncome itemIncome,
                               @RequestHeader(Header.USER_ID) long owner,
                               @PathVariable long itemId) {
         log.info("Requested item with id {} update", itemIncome.getId());

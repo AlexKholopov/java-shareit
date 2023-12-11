@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.State;
@@ -87,28 +88,28 @@ public class BookingService {
         State state;
         try {
             state = State.valueOf(stateStr);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             throw new LockedException("Unknown state: UNSUPPORTED_STATUS");
         }
         var bookings = new ArrayList<Booking>();
         switch (state) {
             case CURRENT:
-                bookings.addAll(bookingRepository.findByBookerAndStartBeforeAndEndAfter(booker, LocalDateTime.now(), LocalDateTime.now()));
+                bookings.addAll(bookingRepository.findByBookerAndStartBeforeAndEndAfter(booker, LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case PAST:
-                bookings.addAll(bookingRepository.findByBookerAndEndBefore(booker, LocalDateTime.now()));
+                bookings.addAll(bookingRepository.findByBookerAndEndBefore(booker, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case FUTURE:
-                bookings.addAll(bookingRepository.findByBookerAndStartAfter(booker, LocalDateTime.now()));
+                bookings.addAll(bookingRepository.findByBookerAndStartAfter(booker, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case WAITING:
-                bookings.addAll(bookingRepository.findByBookerAndStatus(booker, Status.WAITING));
+                bookings.addAll(bookingRepository.findByBookerAndStatus(booker, Status.WAITING, Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case REJECTED:
-                bookings.addAll(bookingRepository.findByBookerAndStatus(booker, Status.REJECTED));
+                bookings.addAll(bookingRepository.findByBookerAndStatus(booker, Status.REJECTED, Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case ALL:
-                bookings.addAll(bookingRepository.findByBooker(booker));
+                bookings.addAll(bookingRepository.findByBooker(booker, Sort.by(Sort.Direction.DESC, "start")));
                 break;
 
         }
@@ -120,31 +121,31 @@ public class BookingService {
         State state;
         try {
             state = State.valueOf(stateStr);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             throw new LockedException("Unknown state: UNSUPPORTED_STATUS");
         }
         var bookings = new ArrayList<Booking>();
         switch (state) {
             case CURRENT:
-                bookings.addAll(bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(), LocalDateTime.now()));
+                bookings.addAll(bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case PAST:
-                bookings.addAll(bookingRepository.findByItem_OwnerAndEndBefore(user, LocalDateTime.now()));
+                bookings.addAll(bookingRepository.findByItem_OwnerAndEndBefore(user, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case FUTURE:
-                bookings.addAll(bookingRepository.findByItem_OwnerAndStartAfter(user, LocalDateTime.now()));
+                bookings.addAll(bookingRepository.findByItem_OwnerAndStartAfter(user, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case WAITING:
-                bookings.addAll(bookingRepository.findByItem_OwnerAndStatus(user, Status.WAITING));
+                bookings.addAll(bookingRepository.findByItem_OwnerAndStatus(user, Status.WAITING, Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case REJECTED:
-                bookings.addAll(bookingRepository.findByItem_OwnerAndStatus(user, Status.REJECTED));
+                bookings.addAll(bookingRepository.findByItem_OwnerAndStatus(user, Status.REJECTED, Sort.by(Sort.Direction.DESC, "start")));
                 break;
             case ALL:
-                bookings.addAll(bookingRepository.findByItem_Owner(user));
+                bookings.addAll(bookingRepository.findByItem_Owner(user, Sort.by(Sort.Direction.DESC, "start")));
                 break;
         }
-        return bookings.stream().sorted(Comparator.comparingLong(it -> -it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli())).map(bookingMapper::toDTO).collect(Collectors.toList());
+        return bookings.stream().map(bookingMapper::toDTO).collect(Collectors.toList());
     }
 
     private void checkValidBookingTime(BookingIncome bookingIncome) {

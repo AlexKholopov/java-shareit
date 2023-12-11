@@ -15,7 +15,6 @@ import ru.practicum.shareit.user.model.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.utils.Marker;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,15 +27,13 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    @Validated(Marker.OnCreate.class)
-    public UserDto createUser(@Valid @RequestBody UserDto user) {
+    public UserDto createUser(@RequestBody @Validated(Marker.OnCreate.class) UserDto user) {
         log.info("Requested creating user");
         return userService.createUser(user);
     }
 
     @PatchMapping("/{userId}")
-    @Validated(Marker.OnUpdate.class)
-    public UserDto updateUser(@RequestBody UserDto user, @PathVariable long userId) {
+    public UserDto updateUser(@RequestBody @Validated(Marker.OnUpdate.class) UserDto user, @PathVariable long userId) {
         log.info("Requested updating user with id {}", userId);
         return userService.updateUser(user, userId);
     }

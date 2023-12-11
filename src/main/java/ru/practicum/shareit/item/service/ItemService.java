@@ -75,7 +75,7 @@ public class ItemService {
         User user = userRepository.findById(owner).orElseThrow(() -> new ValidationException("No such user was found"));
         var items = itemRepository.findByOwner(user);
 
-        Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartBeforeAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
+        Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartLessThanEqualAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
                 .map(bookingMapper::toDTO)
                 .sorted(Comparator.comparing(it -> -it.getStart().toInstant(ZoneOffset.UTC).toEpochMilli()))
                 .collect(Collectors.groupingBy(it -> it.getItem().getId(), toList()));
@@ -117,16 +117,14 @@ public class ItemService {
             log.info("Empty search request");
             return Collections.emptyList();
         }
-        var items = itemRepository.findByText(text, text);
+        var items = itemRepository.findByText(text);
         Map<Long, List<CommentDto>> comments = commentRepository.findByItemIn(items)
                 .stream()
                 .sorted(Comparator.comparingLong(it -> it.getCreated().toInstant(ZoneOffset.UTC).toEpochMilli()))
                 .map(commentMapper::toDTO)
                 .collect(Collectors.groupingBy(CommentDto::getId, toList()));
         List<ItemDto> result = new ArrayList<>();
-        items.forEach(item -> {
-            result.add(itemMapper.toDTO(item, comments.get(item.getId())));
-        });
+        items.forEach(item -> result.add(itemMapper.toDTO(item, comments.get(item.getId()))));
         return result;
     }
 

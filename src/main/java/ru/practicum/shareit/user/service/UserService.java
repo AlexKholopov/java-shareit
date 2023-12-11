@@ -31,10 +31,14 @@ public class UserService {
         }
         User oldUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));
         user.setId(id);
-        if (user.getName() == null || user.getName().isBlank()) user.setName(oldUser.getName());
-        else user.setName(user.getName());
-        if (user.getEmail() == null || user.getEmail().isBlank()) user.setEmail(oldUser.getEmail());
-        else user.setEmail(user.getEmail());
+        String name = user.getName();
+        if (name == null || name.isBlank()) {
+            user.setName(oldUser.getName());
+        }
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) {
+            user.setEmail(oldUser.getEmail());
+        }
         return userMapper.toDto(userRepository.save(userMapper.fromDto(user)));
     }
 
