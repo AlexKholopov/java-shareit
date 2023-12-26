@@ -1,17 +1,11 @@
 package ru.practicum.shareit.user.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.util.List;
+import java.util.Optional;
 
-public interface UserRepository {
-    User createUser(User user);
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String str);
 
-    User updateUser(User user);
-
-    void deleteUser(long id);
-
-    User getUserById(long id);
-
-    List<User> getUsers();
 }

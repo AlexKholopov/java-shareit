@@ -3,11 +3,14 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.model.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -15,29 +18,40 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public User createUser(User user) {
-        return userRepository.createUser(user);
+    public UserDto createUser(UserDto user) {
+        return userMapper.toDto(userRepository.save(userMapper.fromDto(user)));
     }
 
-    public User updateUser(User user, long id) {
+    public UserDto updateUser(UserDto user, long id) {
         if (id < 1) {
             log.error("Wrong user id - {}", user.getId());
             throw new ValidationException("User id must be positive");
         }
+        User oldUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));
         user.setId(id);
-        return userRepository.updateUser(user);
+        String name = user.getName();
+        if (name == null || name.isBlank()) {
+            user.setName(oldUser.getName());
+        }
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) {
+            user.setEmail(oldUser.getEmail());
+        }
+        return userMapper.toDto(userRepository.save(userMapper.fromDto(user)));
     }
 
     public void deleteUser(long id) {
-        userRepository.deleteUser(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));
+        userRepository.delete(user);
     }
 
-    public User getUserById(long id) {
-        return userRepository.getUserById(id);
+    public UserDto getUserById(long id) {
+        return userMapper.toDto(userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found")));
     }
 
-    public List<User> getUsers() {
-        return userRepository.getUsers();
+    public List<UserDto> getUsers() {
+        return userRepository.findAll().stream().map(userMapper::toDto).collect(Collectors.toList());
     }
 }
