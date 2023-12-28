@@ -20,6 +20,8 @@ import ru.practicum.shareit.item.model.dto.ItemDto;
 import ru.practicum.shareit.item.model.dto.ItemIncome;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -46,10 +48,17 @@ public class ItemService {
     private final CommentMapper commentMapper;
     private final ItemMapper itemMapper;
     private final BookingMapper bookingMapper;
+    private final ItemRequestRepository itemRequestRepository;
 
     public ItemDto createItem(ItemIncome itemIncome, long owner) {
         User user = userRepository.findById(owner).orElseThrow(() -> new NotFoundException("No such owner was found"));
-        Item item = itemRepository.save(itemMapper.toModel(itemIncome, user));
+        Item item;
+        if (itemIncome.getRequestId() != null) {
+            ItemRequest itemRequest = itemRequestRepository.findById(itemIncome.getRequestId()).orElseThrow(() -> new NotFoundException("No such request was found"));
+            item = itemRepository.save(itemMapper.toModel(itemIncome, user, itemRequest));
+        } else {
+            item = itemRepository.save(itemMapper.toModel(itemIncome, user));
+        }
         return itemMapper.toDTO(item, Collections.emptyList());
     }
 
