@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -25,6 +26,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 public class BookingController {
+    @Autowired
     private final BookingService bookingService;
 
     @PostMapping
@@ -45,14 +47,18 @@ public class BookingController {
     }
 
     @GetMapping
-    public List<BookingDto> getAllBookings(@RequestHeader(Header.USER_ID) long user,
+    public List<BookingDto> getAllBookings(@RequestParam(required = false, defaultValue = "0") int from,
+                                           @RequestParam(required = false, defaultValue = "20") int size,
+                                           @RequestHeader(Header.USER_ID) long user,
                                            @RequestParam(defaultValue = "ALL") String state) {
-        return bookingService.getAllUserBookings(user, state);
+        return bookingService.getAllUserBookings(from, size, user, state);
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> getAllBookingsByOwner(@RequestHeader(Header.USER_ID) long user,
+    public List<BookingDto> getAllBookingsByOwner(@RequestParam(required = false, defaultValue = "0") int from,
+                                                  @RequestParam(required = false, defaultValue = "20") int size,
+                                                  @RequestHeader(Header.USER_ID) long user,
                                                   @RequestParam(defaultValue = "ALL") String state) {
-        return bookingService.getAllUsersItemsBookings(user, state);
+        return bookingService.getAllUsersItemsBookings(from, size, user, state);
     }
 }

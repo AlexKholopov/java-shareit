@@ -2,16 +2,17 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingForItem;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.service.BookingMapper;
+import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NoAuthorizationException;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.CommentDto;
@@ -80,9 +81,10 @@ public class ItemService {
         return itemMapper.toDTO(item1, comments);
     }
 
-    public List<ItemDto> getUserItems(long owner) {
-        User user = userRepository.findById(owner).orElseThrow(() -> new ValidationException("No such user was found"));
-        var items = itemRepository.findByOwner(user);
+    public List<ItemDto> getUserItems(int from, int size, long owner) {
+        User user = userRepository.findById(owner).orElseThrow(() -> new ConflictException("No such user was found"));
+        PageRequest pageRequest = PageRequest.of(from, size);
+        var items = itemRepository.findByOwner(user, pageRequest).toList();
 
         Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartLessThanEqualAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
                 .map(bookingMapper::toDTO)
@@ -121,12 +123,13 @@ public class ItemService {
         return itemsDto;
     }
 
-    public List<ItemDto> searchItems(String text) {
+    public List<ItemDto> searchItems(int from, int size, String text) {
         if (text.isBlank()) {
             log.info("Empty search request");
             return Collections.emptyList();
         }
-        var items = itemRepository.findByText(text);
+        PageRequest pageRequest = PageRequest.of(from, size);
+        var items = itemRepository.findByText(text, pageRequest).toList();
         Map<Long, List<CommentDto>> comments = commentRepository.findByItemIn(items)
                 .stream()
                 .sorted(Comparator.comparingLong(it -> it.getCreated().toInstant(ZoneOffset.UTC).toEpochMilli()))

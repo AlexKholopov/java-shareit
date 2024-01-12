@@ -50,15 +50,15 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getUsersItems(@RequestHeader(Header.USER_ID) long owner) {
+    public List<ItemDto> getUsersItems(@RequestParam(required = false, defaultValue = "0") int from, @RequestParam(required = false, defaultValue = "20") int size, @RequestHeader(Header.USER_ID) long owner) {
         log.info("Requested all user {} items", owner);
-        return itemService.getUserItems(owner);
+        return itemService.getUserItems(from, size, owner);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam String text) {
+    public List<ItemDto> searchItems(@RequestParam(required = false, defaultValue = "0") int from, @RequestParam(required = false, defaultValue = "20") int size, @RequestParam String text) {
         log.info("Requested items like {}", text.toLowerCase());
-        return itemService.searchItems(text);
+        return itemService.searchItems(from, size, text);
     }
 
     @GetMapping("/{itemId}")

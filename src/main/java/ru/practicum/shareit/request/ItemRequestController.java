@@ -24,7 +24,7 @@ public class ItemRequestController {
     private final ItemRequestService service;
 
     @PostMapping
-    public ItemRequestDto createReques(@Valid @RequestBody ItemRequestInput itemRequestInput, @RequestHeader(Header.USER_ID) long user) {
+    public ItemRequestDto createRequest(@Valid @RequestBody ItemRequestInput itemRequestInput, @RequestHeader(Header.USER_ID) long user) {
         return service.createRequest(itemRequestInput, user);
     }
 
