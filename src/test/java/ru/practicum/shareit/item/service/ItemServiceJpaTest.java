@@ -11,6 +11,7 @@ import ru.practicum.shareit.user.model.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.util.List;
 
@@ -27,6 +28,23 @@ public class ItemServiceJpaTest {
     private final EntityManager em;
     private final ItemService service;
     private final UserService userService;
+
+    public void dropDb() {
+        Query query = em.createQuery("DROP TABLE IF EXISTS users CASCADE");
+        query.executeUpdate();
+
+        query = em.createQuery("DROP TABLE IF EXISTS items CASCADE");
+        query.executeUpdate();
+
+        query = em.createQuery("DROP TABLE IF EXISTS bookings CASCADE");
+        query.executeUpdate();
+
+        query = em.createQuery("DROP TABLE IF EXISTS comments CASCADE");
+        query.executeUpdate();
+
+        query = em.createQuery("DROP TABLE IF EXISTS requests CASCADE");
+        query.executeUpdate();
+    }
 
     @Test
     void saveItemTest() {
@@ -49,6 +67,7 @@ public class ItemServiceJpaTest {
 
         assertThat(item.getName(), equalTo(itemIncome.getName()));
         assertThat(item.getAvailable(), equalTo(itemIncome.getAvailable()));
+        dropDb();
     }
 
     @Test
@@ -66,5 +85,6 @@ public class ItemServiceJpaTest {
         var res = service.getUserItems(0, 1, user.getId());
 
         assertEquals(List.of(item), res);
+        dropDb();
     }
 }
