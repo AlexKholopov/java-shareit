@@ -106,9 +106,12 @@ class UserServiceTest {
     void mapperTest() {
         User user = new User();
         user.setId(1L);
+        User user1 = new User();
+        user.setId(1L);
         UserId userId = new UserId();
         userId.setId(1L);
         var res = userMapper.toId(user);
         assertEquals(userId, res);
+        user.equals(user1);
     }
 }

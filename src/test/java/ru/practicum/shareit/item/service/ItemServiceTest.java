@@ -261,6 +261,9 @@ class ItemServiceTest {
         Item item = new Item();
         item.setOwner(owner);
         item.setId(1L);
+        Item item1 = new Item();
+        item.setOwner(owner);
+        item.setId(1L);
         var prevStart = LocalDateTime.now().minusMinutes(10);
         var prevEnd = LocalDateTime.now().minusMinutes(1);
         var nextStart = LocalDateTime.now().plusMinutes(1);
@@ -295,6 +298,7 @@ class ItemServiceTest {
         itemDto.setLastBooking(new BookingForItem(1L, 0L));
         itemDto.setNextBooking(new BookingForItem(2L, 0L));
         assertEquals(itemDto, res);
+        item.equals(item1);
     }
 
     @Test
