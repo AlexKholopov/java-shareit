@@ -435,6 +435,12 @@ class ItemServiceTest {
 
         var maybeNull = commentMapper.fromDTO(null, null, null);
         maybeNull = commentMapper.fromIncome(null, null, null, null);
+        itemMapper.toModel(new ItemIncome(), null);
+        itemMapper.toModel(null, null);
+        itemMapper.toModel(new ItemIncome(), null, null);
+        itemMapper.toModel(null, null, null);
+        itemMapper.toModel(null, null, new ItemRequest());
+        commentMapper.toDTO(null);
         var resComment = commentMapper.fromDTO(commentDto, user, new Item());
         assertEquals(comment, resComment);
     }
