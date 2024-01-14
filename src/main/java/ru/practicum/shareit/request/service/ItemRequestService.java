@@ -15,7 +15,6 @@ import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
@@ -32,7 +31,7 @@ public class ItemRequestService {
     private final ItemRequestMapper itemRequestMapper;
     private final ItemMapper itemMapper;
 
-    public ItemRequestDto createRequest(@Valid ItemRequestInput itemRequestInput, long user) {
+    public ItemRequestDto createRequest(ItemRequestInput itemRequestInput, long user) {
         User u = userRepository.findById(user).orElseThrow(() -> new NotFoundException("No such user was found"));
         LocalDateTime created = LocalDateTime.now();
         return itemRequestMapper.toDto(itemRequestRepository.save(itemRequestMapper.toModel(itemRequestInput, created, u)), Collections.emptyList());

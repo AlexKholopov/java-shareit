@@ -121,6 +121,9 @@ public class BookingService {
     }
 
     public List<BookingDto> getAllUsersItemsBookings(int from, int size, long ownerId, String stateStr) {
+        if (from < 0 || size < 0) {
+            throw new ValidationException("Incorrect page query");
+        }
         User user = userRepository.findById(ownerId).orElseThrow(() -> new NotFoundException("No such user was found"));
         State state;
         try {

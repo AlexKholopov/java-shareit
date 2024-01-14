@@ -26,7 +26,7 @@ public class UserService {
 
     public UserDto updateUser(UserDto user, long id) {
         if (id < 1) {
-            log.error("Wrong user id - {}", user.getId());
+            log.error("Wrong user id - {}", id);
             throw new ConflictException("User id must be positive");
         }
         User oldUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));

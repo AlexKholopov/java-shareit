@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -64,11 +63,7 @@ public class ItemService {
     }
 
     public ItemDto updateItem(ItemIncome itemIncome, long owner) {
-        Optional<Item> maybeItem = itemRepository.findById(itemIncome.getId());
-        if (maybeItem.isEmpty()) {
-            throw new NotFoundException("No such item was found");
-        }
-        Item item = maybeItem.get();
+        Item item = itemRepository.findById(itemIncome.getId()).orElseThrow(() -> new NotFoundException("No such item was found"));
         if (item.getOwner().getId() != owner) {
             log.error("Unauthorized update attempt");
             throw new NoAuthorizationException("You do not have authorization to update the object");
@@ -172,9 +167,12 @@ public class ItemService {
         if (!exists) {
             throw new LockedException("No bookings by that user was found");
         }
+        if (item.getOwner().getId() == userId) {
+            throw new LockedException("You can't comment your item");
+        }
         Comment comment = commentMapper.fromIncome(commentIncome, user, item, null);
         comment.setCreated(LocalDateTime.now());
-        commentRepository.save(comment);
+        comment = commentRepository.save(comment);
         return commentMapper.toDTO(comment);
     }
 }
