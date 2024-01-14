@@ -15,8 +15,10 @@ import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.model.dto.BookingForItem;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.service.BookingMapper;
+import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NoAuthorizationException;
+import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.CommentDto;
@@ -90,6 +92,16 @@ class ItemServiceTest {
     }
 
     @Test
+    void createItemFailNoUser() {
+
+        ItemIncome itemIncome = new ItemIncome();
+
+        var res = assertThrows(NotFoundException.class, () -> itemService.createItem(itemIncome, 1L));
+
+        assertEquals("No such owner was found", res.getMessage());
+    }
+
+    @Test
     void updateItemSuccess() {
         User owner = new User();
         owner.setId(1L);
@@ -120,6 +132,15 @@ class ItemServiceTest {
                 () -> itemService.updateItem(itemIncome, 1L));
 
         assertEquals("You do not have authorization to update the object", res.getMessage());
+    }
+
+    @Test
+    void updateItemFailNoUser() {
+        ItemIncome itemIncome = new ItemIncome();
+
+        var res = assertThrows(NotFoundException.class, () -> itemService.updateItem(itemIncome, 1L));
+
+        assertEquals("No such item was found", res.getMessage());
     }
 
     @Test
@@ -193,6 +214,13 @@ class ItemServiceTest {
         itemDto.setId(1L);
         itemDto.setComments(List.of());
         assertEquals(List.of(itemDto), res);
+    }
+
+    @Test
+    void getUserItemsFailNoUser() {
+        var res = assertThrows(ConflictException.class, () -> itemService.getUserItems(0, 1, 1L));
+
+        assertEquals("No such user was found", res.getMessage());
     }
 
     @Test
@@ -371,6 +399,24 @@ class ItemServiceTest {
     }
 
     @Test
+    void addCommentFailNoItem() {
+        CommentIncome commentIncome = new CommentIncome();
+        Item item = new Item();
+        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        var res = assertThrows(NotFoundException.class, () -> itemService.addComment(1L, 1L, commentIncome));
+
+        assertEquals("No such user was found", res.getMessage());
+    }
+
+    @Test
+    void addCommentFailNoUser() {
+        CommentIncome commentIncome = new CommentIncome();
+        var res = assertThrows(NotFoundException.class, () -> itemService.addComment(1L, 1L, commentIncome));
+
+        assertEquals("No such item was found", res.getMessage());
+    }
+
+    @Test
     void mappingTest() {
         User user = new User();
         user.setName("Name");
@@ -387,6 +433,8 @@ class ItemServiceTest {
         commentDto.setAuthorName("Name");
         commentDto.setCreated(created);
 
+        var maybeNull = commentMapper.fromDTO(null, null, null);
+        maybeNull = commentMapper.fromIncome(null, null, null, null);
         var resComment = commentMapper.fromDTO(commentDto, user, new Item());
         assertEquals(comment, resComment);
     }
