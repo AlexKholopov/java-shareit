@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
@@ -141,6 +142,25 @@ class ItemServiceTest {
         var res = assertThrows(NotFoundException.class, () -> itemService.updateItem(itemIncome, 1L));
 
         assertEquals("No such item was found", res.getMessage());
+    }
+
+    @Test
+    void updateItemSuccessAllFields() {
+        User owner = new User();
+        owner.setId(1L);
+        ItemIncome itemIncome = new ItemIncome();
+        itemIncome.setRequestId(1L);
+        itemIncome.setId(1L);
+        itemIncome.setDescription("Description");
+        itemIncome.setName("Name");
+        itemIncome.setAvailable(true);
+        Item item = new Item();
+        item.setOwner(owner);
+
+        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        var res = itemService.updateItem(itemIncome, 1L);
+
+        assertEquals(itemMapper.toDTO(item, List.of()), res);
     }
 
     @Test
@@ -330,6 +350,59 @@ class ItemServiceTest {
     }
 
     @Test
+    void getItemByIdSuccessWithoutBookings() {
+        User owner = new User();
+        owner.setId(1L);
+        User booker = new User();
+        booker.setId(0L);
+        Item item = new Item();
+        item.setOwner(owner);
+        item.setId(1L);
+        Item item1 = new Item();
+        item.setOwner(owner);
+        item.setId(1L);
+        var prevStart = LocalDateTime.now().minusMinutes(10);
+        var prevEnd = LocalDateTime.now().minusMinutes(1);
+        var nextStart = LocalDateTime.now().plusMinutes(1);
+        var nextEnd = LocalDateTime.now().plusMinutes(10);
+        Booking prevBooking = new Booking();
+        prevBooking.setId(1L);
+        prevBooking.setBooker(booker);
+        prevBooking.setStart(prevStart);
+        prevBooking.setEnd(prevEnd);
+        prevBooking.setItem(item);
+        Booking nextBooking = new Booking();
+        nextBooking.setId(2L);
+        nextBooking.setBooker(booker);
+        nextBooking.setStart(nextStart);
+        nextBooking.setEnd(nextEnd);
+        nextBooking.setItem(item);
+
+
+        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        Mockito.when(commentRepository.findByItem(item)).thenReturn(List.of());
+        Mockito.when(bookingRepository.findByItemAndStartLessThanEqualAndStatus(Mockito.any(Item.class),
+                Mockito.any(LocalDateTime.class),
+                Mockito.any(Status.class))).thenReturn(List.of());
+        Mockito.when(bookingRepository.findByItemAndStartAfterAndStatus(Mockito.any(Item.class),
+                Mockito.any(LocalDateTime.class),
+                Mockito.any(Status.class))).thenReturn(List.of());
+        var res = itemService.getItemById(1L, 1L);
+
+        ItemDto itemDto = new ItemDto();
+        itemDto.setId(1L);
+        itemDto.setComments(List.of());
+        assertEquals(itemDto, res);
+        item.equals(item1);
+    }
+
+    @Test
+    void getItemByIdFailNoItem() {
+        var res = assertThrows(NotFoundException.class, () -> itemService.getItemById(1L, 2));
+        assertEquals("No such item was found", res.getMessage());
+    }
+
+    @Test
     void addCommentSuccess() {
         User user = new User();
         user.setId(1L);
@@ -420,6 +493,7 @@ class ItemServiceTest {
     void mappingTest() {
         User user = new User();
         user.setName("Name");
+        Item item = new Item();
         var created = LocalDateTime.now();
         Comment comment = new Comment();
         comment.setText("text");
@@ -434,13 +508,84 @@ class ItemServiceTest {
         commentDto.setCreated(created);
 
         var maybeNull = commentMapper.fromDTO(null, null, null);
+        assertNull(maybeNull);
+
+        var d = commentMapper.fromDTO(commentDto, null, null);
+        comment.setUser(null);
+        assertEquals(comment, d);
+
+        d = commentMapper.fromDTO(null, user, null);
+        comment.setUser(user);
+        comment.setCreated(null);
+        comment.setText(null);
+        comment.setId(1L);
+        d.setId(1L);
+        assertEquals(comment, d);
+
+        d = commentMapper.fromDTO(null, null, item);
+        comment.setUser(null);
+        comment.setItem(item);
+        d.setId(1L);
+        assertEquals(comment, d);
+
+        d = commentMapper.fromIncome(new CommentIncome(), null, null, null);
+        comment.setUser(null);
+        comment.setItem(null);
+        comment.setId(1L);
+        d.setId(1L);
+        assertEquals(comment, d);
+
+        d = commentMapper.fromIncome(null, user, null, null);
+        comment.setUser(user);
+        comment.setId(1L);
+        d.setId(1L);
+        assertEquals(comment, d);
+
+        d = commentMapper.fromIncome(null, null, item, null);
+        comment.setUser(null);
+        comment.setItem(item);
+        comment.setId(1L);
+        d.setId(1L);
+        d = commentMapper.fromIncome(null, null, null, 1L);
+        assertEquals(comment, d);
+
         maybeNull = commentMapper.fromIncome(null, null, null, null);
-        itemMapper.toModel(new ItemIncome(), null);
-        itemMapper.toModel(null, null);
-        itemMapper.toModel(new ItemIncome(), null, null);
-        itemMapper.toModel(null, null, null);
-        itemMapper.toModel(null, null, new ItemRequest());
-        commentMapper.toDTO(null);
+        assertNull(maybeNull);
+
+        Item expItem = new Item();
+        var i = itemMapper.toModel(new ItemIncome(), null);
+        expItem.setId(0L);
+        assertEquals(expItem, i);
+
+        i = itemMapper.toModel(null, null);
+        assertNull(i);
+
+        i = itemMapper.toModel(null, null, null);
+        assertNull(i);
+
+        i = itemMapper.toModel(new ItemIncome(), null, null);
+        assertEquals(expItem, i);
+
+        i = itemMapper.toModel(null, null, new ItemRequest());
+        expItem.setRequest(new ItemRequest());
+        i.setId(0L);
+        assertEquals(expItem, i);
+
+
+        ItemDto id = itemMapper.toDTO(null, null);
+        assertNull(id);
+
+        id = itemMapper.toDTO(item, null);
+        assertEquals(new ItemDto(), id);
+
+        id = itemMapper.toDTO(null, List.of());
+        ItemDto itemDto = new ItemDto();
+        itemDto.setComments(List.of());
+        assertEquals(itemDto, id);
+
+        var com = commentMapper.toDTO(null);
+        assertNull(com);
+
         var resComment = commentMapper.fromDTO(commentDto, user, new Item());
         assertEquals(comment, resComment);
     }
