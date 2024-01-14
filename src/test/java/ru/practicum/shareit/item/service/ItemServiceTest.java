@@ -367,7 +367,7 @@ class ItemServiceTest {
     }
 
     @Test
-    void MappingTest() {
+    void mappingTest() {
         User user = new User();
         user.setName("Name");
         var created = LocalDateTime.now();
