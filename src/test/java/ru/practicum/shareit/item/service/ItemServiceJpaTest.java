@@ -1,4 +1,4 @@
-/*package ru.practicum.shareit.item.service;
+package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -67,4 +67,4 @@ public class ItemServiceJpaTest {
 
         assertEquals(List.of(item), res);
     }
-}*/
+}

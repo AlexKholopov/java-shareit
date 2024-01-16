@@ -1,6 +1,5 @@
 package ru.practicum.shareit.request;
 
-import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class ItemRequestControllerTest {
-    private Gson gson = new Gson();
     MockMvc mockMvc;
     @Mock
     private ItemRequestService itemRequestService;
