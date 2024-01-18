@@ -18,7 +18,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-class ItemRequestControllerTest {
+public class ItemRequestControllerTest {
     MockMvc mockMvc;
     @Mock
     private ItemRequestService itemRequestService;

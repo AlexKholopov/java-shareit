@@ -32,14 +32,14 @@ public class ItemRequestService {
     private final ItemMapper itemMapper;
 
     public ItemRequestDto createRequest(ItemRequestInput itemRequestInput, long user) {
-        User u = userRepository.findById(user).orElseThrow(() -> new NotFoundException("No such user was found"));
+        User userFromDb = userRepository.findById(user).orElseThrow(() -> new NotFoundException("No such user was found"));
         LocalDateTime created = LocalDateTime.now();
-        return itemRequestMapper.toDto(itemRequestRepository.save(itemRequestMapper.toModel(itemRequestInput, created, u)), Collections.emptyList());
+        return itemRequestMapper.toDto(itemRequestRepository.save(itemRequestMapper.toModel(itemRequestInput, created, userFromDb)), Collections.emptyList());
     }
 
     public List<ItemRequestDto> findUserRequests(long user) {
-        User u = userRepository.findById(user).orElseThrow(() -> new NotFoundException("No such user was found"));
-        List<ItemRequest> requests = itemRequestRepository.findByOwner(u);
+        User userFromDb = userRepository.findById(user).orElseThrow(() -> new NotFoundException("No such user was found"));
+        List<ItemRequest> requests = itemRequestRepository.findByOwner(userFromDb);
         var items = itemRepository.findByRequestIn(requests);
         if (items.isEmpty()) {
             return requests.stream().map(it -> itemRequestMapper.toDto(it, Collections.emptyList())).collect(Collectors.toList());
@@ -56,8 +56,7 @@ public class ItemRequestService {
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("No such user was found"));
         PageRequest pageRequest = PageRequest.of(from, size, Sort.Direction.DESC, "created");
         var res = itemRequestRepository.findByOwnerNot(user, pageRequest);
-        var requests = res.toList();
-        var items = itemRepository.findByRequestIn(requests);
+        var items = itemRepository.findByRequestIn(res);
         if (items.isEmpty()) {
             return res.stream().map(it -> itemRequestMapper.toDto(it, Collections.emptyList())).collect(Collectors.toList());
         }

@@ -8,7 +8,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -107,7 +106,7 @@ class ItemRequestServiceTest {
         Mockito.when(userRepository.findById(0L)).thenReturn(Optional.of(user));
         Mockito.when(itemRequestRepository.findByOwnerNot(Mockito.any(User.class),
                         Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(itemRequest)));
+                .thenReturn(List.of(itemRequest));
         Mockito.when(itemRepository.findByRequestIn(List.of(itemRequest))).thenReturn(List.of(item));
         var res = itemRequestService.findAllRequests(0, 2, 0L);
 
@@ -131,7 +130,7 @@ class ItemRequestServiceTest {
         Mockito.when(userRepository.findById(0L)).thenReturn(Optional.of(user));
         Mockito.when(itemRequestRepository.findByOwnerNot(Mockito.any(User.class),
                         Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(itemRequest)));
+                .thenReturn(List.of(itemRequest));
         Mockito.when(itemRepository.findByRequestIn(List.of(itemRequest))).thenReturn(List.of());
         var res = itemRequestService.findAllRequests(0, 2, 0L);
 

@@ -98,22 +98,22 @@ public class BookingService {
         List<Booking> bookings = List.of();
         switch (state) {
             case CURRENT:
-                bookings = bookingRepository.findByBookerAndStartBeforeAndEndAfter(booker, LocalDateTime.now(), LocalDateTime.now(), pageRequest).toList();
+                bookings = bookingRepository.findByBookerAndStartBeforeAndEndAfter(booker, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
                 break;
             case PAST:
-                bookings = bookingRepository.findByBookerAndEndBefore(booker, LocalDateTime.now(), pageRequest).toList();
+                bookings = bookingRepository.findByBookerAndEndBefore(booker, LocalDateTime.now(), pageRequest);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByBookerAndStartAfter(booker, LocalDateTime.now(), pageRequest).toList();
+                bookings = bookingRepository.findByBookerAndStartAfter(booker, LocalDateTime.now(), pageRequest);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByBookerAndStatus(booker, Status.WAITING, pageRequest).toList();
+                bookings = bookingRepository.findByBookerAndStatus(booker, Status.WAITING, pageRequest);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByBookerAndStatus(booker, Status.REJECTED, pageRequest).toList();
+                bookings = bookingRepository.findByBookerAndStatus(booker, Status.REJECTED, pageRequest);
                 break;
             case ALL:
-                bookings = bookingRepository.findByBooker(booker, pageRequest).toList();
+                bookings = bookingRepository.findByBooker(booker, pageRequest);
                 break;
 
         }
@@ -135,22 +135,22 @@ public class BookingService {
         List<Booking> bookings = List.of();
         switch (state) {
             case CURRENT:
-                bookings = bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(), LocalDateTime.now(), pageRequest).toList();
+                bookings = bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
                 break;
             case PAST:
-                bookings = bookingRepository.findByItem_OwnerAndEndBefore(user, LocalDateTime.now(), pageRequest).toList();
+                bookings = bookingRepository.findByItem_OwnerAndEndBefore(user, LocalDateTime.now(), pageRequest);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByItem_OwnerAndStartAfter(user, LocalDateTime.now(), pageRequest).toList();
+                bookings = bookingRepository.findByItem_OwnerAndStartAfter(user, LocalDateTime.now(), pageRequest);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.WAITING, pageRequest).toList();
+                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.WAITING, pageRequest);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.REJECTED, pageRequest).toList();
+                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.REJECTED, pageRequest);
                 break;
             case ALL:
-                bookings = bookingRepository.findByItem_Owner(user, pageRequest).toList();
+                bookings = bookingRepository.findByItem_Owner(user, pageRequest);
                 break;
         }
         return bookings.stream().map(bookingMapper::toDTO).collect(Collectors.toList());

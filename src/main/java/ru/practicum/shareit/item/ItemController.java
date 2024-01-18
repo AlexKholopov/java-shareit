@@ -17,7 +17,7 @@ import ru.practicum.shareit.item.model.dto.CommentIncome;
 import ru.practicum.shareit.item.model.dto.ItemDto;
 import ru.practicum.shareit.item.model.dto.ItemIncome;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.utils.Header;
+import ru.practicum.shareit.utils.ConstantUtils;
 import ru.practicum.shareit.utils.Marker;
 
 import javax.validation.Valid;
@@ -32,14 +32,14 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ItemDto createItem(@RequestBody @Validated(Marker.OnCreate.class) ItemIncome itemIncome, @RequestHeader(Header.USER_ID) long owner) {
+    public ItemDto createItem(@RequestBody @Validated(Marker.OnCreate.class) ItemIncome itemIncome, @RequestHeader(ConstantUtils.USER_ID) long owner) {
         log.info("Requested creating item");
         return itemService.createItem(itemIncome, owner);
     }
 
     @PatchMapping("/{itemId}")
     public ItemDto updateItem(@RequestBody @Validated(Marker.OnUpdate.class) ItemIncome itemIncome,
-                              @RequestHeader(Header.USER_ID) long owner,
+                              @RequestHeader(ConstantUtils.USER_ID) long owner,
                               @PathVariable long itemId) {
         log.info("Requested item with id {} update", itemIncome.getId());
         if (itemIncome.getId() == 0) {
@@ -50,25 +50,25 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getUsersItems(@RequestParam(required = false, defaultValue = "0") int from, @RequestParam(required = false, defaultValue = "20") int size, @RequestHeader(Header.USER_ID) long owner) {
+    public List<ItemDto> getUsersItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from, @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size, @RequestHeader(ConstantUtils.USER_ID) long owner) {
         log.info("Requested all user {} items", owner);
         return itemService.getUserItems(from, size, owner);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam(required = false, defaultValue = "0") int from, @RequestParam(required = false, defaultValue = "20") int size, @RequestParam String text) {
+    public List<ItemDto> searchItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from, @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size, @RequestParam String text) {
         log.info("Requested items like {}", text.toLowerCase());
         return itemService.searchItems(from, size, text);
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getItemById(@RequestHeader(Header.USER_ID) long user, @PathVariable long itemId) {
+    public ItemDto getItemById(@RequestHeader(ConstantUtils.USER_ID) long user, @PathVariable long itemId) {
         log.info("Requested item with id {}", itemId);
         return itemService.getItemById(itemId, user);
     }
 
     @PostMapping("/{itemId}/comment")
-    public CommentDto addComment(@RequestHeader(Header.USER_ID) long user, @PathVariable long itemId, @RequestBody @Valid CommentIncome commentIncome) {
+    public CommentDto addComment(@RequestHeader(ConstantUtils.USER_ID) long user, @PathVariable long itemId, @RequestBody @Valid CommentIncome commentIncome) {
         log.info("requested add comment for item {} by user {}", itemId, user);
         return itemService.addComment(itemId, user, commentIncome);
     }

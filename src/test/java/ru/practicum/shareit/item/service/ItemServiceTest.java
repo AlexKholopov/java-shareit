@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
@@ -8,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
@@ -61,6 +61,21 @@ class ItemServiceTest {
     private BookingMapper bookingMapper = Mappers.getMapper(BookingMapper.class);
     @Spy
     private CommentMapper commentMapper = Mappers.getMapper(CommentMapper.class);
+    private User owner;
+    private Item item;
+    private ItemIncome itemIncome;
+
+    @BeforeEach
+    public void prepare() {
+        owner = new User();
+        owner.setId(1L);
+        itemIncome = new ItemIncome();
+        itemIncome.setRequestId(1L);
+        itemIncome.setId(1L);
+        item = new Item();
+        item.setOwner(owner);
+        item.setId(1L);
+    }
 
     @Test
     void createItemWithoutRequestSuccess() {
@@ -78,10 +93,6 @@ class ItemServiceTest {
 
     @Test
     void createItemWithRequestSuccess() {
-        User owner = new User();
-        owner.setId(1L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
         ItemDto itemResult = new ItemDto();
         itemResult.setComments(List.of());
 
@@ -95,8 +106,6 @@ class ItemServiceTest {
     @Test
     void createItemFailNoUser() {
 
-        ItemIncome itemIncome = new ItemIncome();
-
         var res = assertThrows(NotFoundException.class, () -> itemService.createItem(itemIncome, 1L));
 
         assertEquals("No such owner was found", res.getMessage());
@@ -104,13 +113,7 @@ class ItemServiceTest {
 
     @Test
     void updateItemSuccess() {
-        User owner = new User();
-        owner.setId(1L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
-        Item item = new Item();
-        item.setOwner(owner);
+        item.setId(0L);
 
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         var res = itemService.updateItem(itemIncome, 1L);
@@ -120,13 +123,7 @@ class ItemServiceTest {
 
     @Test
     void updateItemFailAuthorization() {
-        User owner = new User();
         owner.setId(2L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
-        Item item = new Item();
-        item.setOwner(owner);
 
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         var res = assertThrows(NoAuthorizationException.class,
@@ -137,7 +134,6 @@ class ItemServiceTest {
 
     @Test
     void updateItemFailNoUser() {
-        ItemIncome itemIncome = new ItemIncome();
 
         var res = assertThrows(NotFoundException.class, () -> itemService.updateItem(itemIncome, 1L));
 
@@ -146,16 +142,10 @@ class ItemServiceTest {
 
     @Test
     void updateItemSuccessAllFields() {
-        User owner = new User();
-        owner.setId(1L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
+        item.setId(0L);
         itemIncome.setDescription("Description");
         itemIncome.setName("Name");
         itemIncome.setAvailable(true);
-        Item item = new Item();
-        item.setOwner(owner);
 
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         var res = itemService.updateItem(itemIncome, 1L);
@@ -165,16 +155,8 @@ class ItemServiceTest {
 
     @Test
     void getUserItemsSuccessWithBookings() {
-        User owner = new User();
-        owner.setId(1L);
         User booker = new User();
         owner.setId(0L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
         var prevStart = LocalDateTime.now().minusMinutes(10);
         var prevEnd = LocalDateTime.now().minusMinutes(1);
         var nextStart = LocalDateTime.now().plusMinutes(1);
@@ -201,7 +183,7 @@ class ItemServiceTest {
                         Mockito.any(Status.class)))
                 .thenReturn(List.of(nextBooking));
         Mockito.when(itemRepository.findByOwner(Mockito.any(User.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(item)));
+                .thenReturn(List.of(item));
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
         var res = itemService.getUserItems(0, 2, 1L);
 
@@ -215,18 +197,9 @@ class ItemServiceTest {
 
     @Test
     void getUserItemsSuccessWithoutBookings() {
-        User owner = new User();
-        owner.setId(1L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
-
 
         Mockito.when(itemRepository.findByOwner(Mockito.any(User.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(item)));
+                .thenReturn(List.of(item));
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
         var res = itemService.getUserItems(0, 2, 1L);
 
@@ -245,21 +218,13 @@ class ItemServiceTest {
 
     @Test
     void searchItemsSuccess() {
-        User owner = new User();
-        owner.setId(1L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
         Comment comment = new Comment();
         comment.setItem(item);
         comment.setId(1L);
         comment.setCreated(LocalDateTime.now());
 
         Mockito.when(itemRepository.findByText(Mockito.anyString(), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(item)));
+                .thenReturn(List.of(item));
         Mockito.when(commentRepository.findByItemIn(Mockito.anyList())).thenReturn(List.of(comment));
         var res = itemService.searchItems(0, 2, "text");
 
@@ -277,14 +242,6 @@ class ItemServiceTest {
 
     @Test
     void getItemByIdSuccessWithComments() {
-        User owner = new User();
-        owner.setId(1L);
-        ItemIncome itemIncome = new ItemIncome();
-        itemIncome.setRequestId(1L);
-        itemIncome.setId(1L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
         Comment comment = new Comment();
         comment.setItem(item);
         comment.setId(1L);
@@ -302,13 +259,8 @@ class ItemServiceTest {
 
     @Test
     void getItemByIdSuccessWithBookings() {
-        User owner = new User();
-        owner.setId(1L);
         User booker = new User();
         booker.setId(0L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
         Item item1 = new Item();
         item.setOwner(owner);
         item.setId(1L);
@@ -351,13 +303,8 @@ class ItemServiceTest {
 
     @Test
     void getItemByIdSuccessWithoutBookings() {
-        User owner = new User();
-        owner.setId(1L);
         User booker = new User();
         booker.setId(0L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
         Item item1 = new Item();
         item.setOwner(owner);
         item.setId(1L);
@@ -406,11 +353,7 @@ class ItemServiceTest {
     void addCommentSuccess() {
         User user = new User();
         user.setId(1L);
-        User owner = new User();
         owner.setId(0L);
-        Item item = new Item();
-        item.setOwner(owner);
-        item.setId(1L);
         CommentIncome commentIncome = new CommentIncome();
         commentIncome.setText("Sample text");
         Comment comment = new Comment();
@@ -435,9 +378,7 @@ class ItemServiceTest {
     void addCommentFailNoBookings() {
         User user = new User();
         user.setId(1L);
-        Item item = new Item();
         item.setOwner(user);
-        item.setId(1L);
 
 
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
@@ -455,10 +396,7 @@ class ItemServiceTest {
     void addCommentFailCommentByOwner() {
         User user = new User();
         user.setId(1L);
-        Item item = new Item();
         item.setOwner(user);
-        item.setId(1L);
-
 
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -510,78 +448,78 @@ class ItemServiceTest {
         var maybeNull = commentMapper.fromDTO(null, null, null);
         assertNull(maybeNull);
 
-        var d = commentMapper.fromDTO(commentDto, null, null);
+        var resultComment = commentMapper.fromDTO(commentDto, null, null);
         comment.setUser(null);
-        assertEquals(comment, d);
+        assertEquals(comment, resultComment);
 
-        d = commentMapper.fromDTO(null, user, null);
+        resultComment = commentMapper.fromDTO(null, user, null);
         comment.setUser(user);
         comment.setCreated(null);
         comment.setText(null);
         comment.setId(1L);
-        d.setId(1L);
-        assertEquals(comment, d);
+        resultComment.setId(1L);
+        assertEquals(comment, resultComment);
 
-        d = commentMapper.fromDTO(null, null, item);
+        resultComment = commentMapper.fromDTO(null, null, item);
         comment.setUser(null);
         comment.setItem(item);
-        d.setId(1L);
-        assertEquals(comment, d);
+        resultComment.setId(1L);
+        assertEquals(comment, resultComment);
 
-        d = commentMapper.fromIncome(new CommentIncome(), null, null, null);
+        resultComment = commentMapper.fromIncome(new CommentIncome(), null, null, null);
         comment.setUser(null);
         comment.setItem(null);
         comment.setId(1L);
-        d.setId(1L);
-        assertEquals(comment, d);
+        resultComment.setId(1L);
+        assertEquals(comment, resultComment);
 
-        d = commentMapper.fromIncome(null, user, null, null);
+        resultComment = commentMapper.fromIncome(null, user, null, null);
         comment.setUser(user);
         comment.setId(1L);
-        d.setId(1L);
-        assertEquals(comment, d);
+        resultComment.setId(1L);
+        assertEquals(comment, resultComment);
 
-        d = commentMapper.fromIncome(null, null, item, null);
+        resultComment = commentMapper.fromIncome(null, null, item, null);
         comment.setUser(null);
         comment.setItem(item);
         comment.setId(1L);
-        d.setId(1L);
-        d = commentMapper.fromIncome(null, null, null, 1L);
-        assertEquals(comment, d);
+        resultComment.setId(1L);
+        resultComment = commentMapper.fromIncome(null, null, null, 1L);
+        assertEquals(comment, resultComment);
 
         maybeNull = commentMapper.fromIncome(null, null, null, null);
         assertNull(maybeNull);
 
         Item expItem = new Item();
-        var i = itemMapper.toModel(new ItemIncome(), null);
+        var resultItem = itemMapper.toModel(new ItemIncome(), null);
         expItem.setId(0L);
-        assertEquals(expItem, i);
+        assertEquals(expItem, resultItem);
 
-        i = itemMapper.toModel(null, null);
-        assertNull(i);
+        resultItem = itemMapper.toModel(null, null);
+        assertNull(resultItem);
 
-        i = itemMapper.toModel(null, null, null);
-        assertNull(i);
+        resultItem = itemMapper.toModel(null, null, null);
+        assertNull(resultItem);
 
-        i = itemMapper.toModel(new ItemIncome(), null, null);
-        assertEquals(expItem, i);
+        resultItem = itemMapper.toModel(new ItemIncome(), null, null);
+        assertEquals(expItem, resultItem);
 
-        i = itemMapper.toModel(null, null, new ItemRequest());
+        resultItem = itemMapper.toModel(null, null, new ItemRequest());
         expItem.setRequest(new ItemRequest());
-        i.setId(0L);
-        assertEquals(expItem, i);
+        resultItem.setId(0L);
+        assertEquals(expItem, resultItem);
 
 
-        ItemDto id = itemMapper.toDTO(null, null);
-        assertNull(id);
+        ItemDto resultItemDto = itemMapper.toDTO(null, null);
+        assertNull(resultItemDto);
 
-        id = itemMapper.toDTO(item, null);
-        assertEquals(new ItemDto(), id);
+        resultItemDto = itemMapper.toDTO(item, null);
+        assertEquals(new ItemDto(), resultItemDto);
 
-        id = itemMapper.toDTO(null, List.of());
+        resultItemDto = itemMapper.toDTO(null, List.of());
         ItemDto itemDto = new ItemDto();
         itemDto.setComments(List.of());
-        assertEquals(itemDto, id);
+        assertEquals(itemDto, resultItemDto);
 
         var com = commentMapper.toDTO(null);
         assertNull(com);

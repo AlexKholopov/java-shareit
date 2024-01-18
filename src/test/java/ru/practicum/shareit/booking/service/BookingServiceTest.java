@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
@@ -8,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.booking.model.Booking;
@@ -47,23 +47,29 @@ class BookingServiceTest {
     private ItemMapper itemMapper = Mappers.getMapper(ItemMapper.class);
     @Spy
     private BookingMapper bookingMapper = Mappers.getMapper(BookingMapper.class);
+    private User owner;
+    private User booker;
+    private Item item;
 
+    @BeforeEach
+    public void prepare() {
+        owner = new User();
+        owner.setId(1L);
+
+        booker = new User();
+        booker.setId(2L);
+
+        item = new Item();
+        item.setId(1L);
+        item.setOwner(owner);
+    }
 
     @Test
     void addBookingSuccess() {
         var start = LocalDateTime.now().plusMinutes(1);
         var end = LocalDateTime.now().plusMinutes(2);
 
-        User owner = new User();
-        owner.setId(1L);
-
-        User booker = new User();
-        booker.setId(2L);
-
-        Item item = new Item();
-        item.setId(0L);
         item.setAvailable(true);
-        item.setOwner(owner);
 
         BookingIncome bookingIncome = new BookingIncome();
         bookingIncome.setItemId(1L);
@@ -93,17 +99,9 @@ class BookingServiceTest {
     void addBookingThrowNotFoundException() {
         var start = LocalDateTime.now().plusMinutes(1);
         var end = LocalDateTime.now().plusMinutes(2);
-
-        User owner = new User();
-        owner.setId(1L);
-
-        User booker = new User();
         booker.setId(1L);
 
-        Item item = new Item();
-        item.setId(0L);
         item.setAvailable(true);
-        item.setOwner(owner);
 
         BookingIncome bookingIncome = new BookingIncome();
         bookingIncome.setItemId(1L);
@@ -124,16 +122,7 @@ class BookingServiceTest {
         var start = LocalDateTime.now().plusMinutes(1);
         var end = LocalDateTime.now().plusMinutes(2);
 
-        User owner = new User();
-        owner.setId(1L);
-
-        User booker = new User();
-        booker.setId(2L);
-
-        Item item = new Item();
-        item.setId(0L);
         item.setAvailable(false);
-        item.setOwner(owner);
 
         BookingIncome bookingIncome = new BookingIncome();
         bookingIncome.setItemId(1L);
@@ -154,16 +143,7 @@ class BookingServiceTest {
         var start = LocalDateTime.now().plusMinutes(1);
         var end = LocalDateTime.now().minusMinutes(2);
 
-        User owner = new User();
-        owner.setId(1L);
-
-        User booker = new User();
-        booker.setId(2L);
-
-        Item item = new Item();
-        item.setId(0L);
         item.setAvailable(true);
-        item.setOwner(owner);
 
         BookingIncome bookingIncome = new BookingIncome();
         bookingIncome.setItemId(1L);
@@ -180,15 +160,11 @@ class BookingServiceTest {
 
     @Test
     void approveBookingSuccessApproved() {
-        User owner = new User();
-        owner.setId(1L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.WAITING);
         booking.setId(1L);
         booking.setItem(item);
+
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
 
@@ -200,15 +176,11 @@ class BookingServiceTest {
 
     @Test
     void approveBookingSuccessRejected() {
-        User owner = new User();
-        owner.setId(1L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.WAITING);
         booking.setId(1L);
         booking.setItem(item);
+
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
 
@@ -220,11 +192,8 @@ class BookingServiceTest {
 
     @Test
     void approveBookingThrowNotFoundException() {
-        User owner = new User();
         owner.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
+
         Booking booking = new Booking();
         booking.setStatus(Status.WAITING);
         booking.setId(1L);
@@ -238,15 +207,11 @@ class BookingServiceTest {
 
     @Test
     void approveBookingThrowLockedException() {
-        User owner = new User();
-        owner.setId(1L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.REJECTED);
         booking.setId(1L);
         booking.setItem(item);
+
         Mockito.when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
 
@@ -257,13 +222,6 @@ class BookingServiceTest {
 
     @Test
     void getBookingSuccess() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.REJECTED);
         booking.setId(1L);
@@ -279,13 +237,6 @@ class BookingServiceTest {
 
     @Test
     void getBookingThrowNotFoundException() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.REJECTED);
         booking.setId(1L);
@@ -301,13 +252,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUsersItemsBookingsSuccessCurrent() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -315,7 +259,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
         Mockito.when(bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(Mockito.any(User.class), Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUsersItemsBookings(0, 2, 1L, "CURRENT");
 
@@ -324,13 +268,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUsersItemsBookingsSuccessPast() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -338,7 +275,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByItem_OwnerAndEndBefore(Mockito.any(User.class), Mockito.any(LocalDateTime.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUsersItemsBookings(0, 2, 2L, "PAST");
 
@@ -347,13 +284,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUsersItemsBookingsSuccessFuture() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -361,7 +291,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByItem_OwnerAndStartAfter(Mockito.any(User.class), Mockito.any(LocalDateTime.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUsersItemsBookings(0, 2, 2L, "FUTURE");
 
@@ -370,13 +300,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUsersItemsBookingsSuccessWaiting() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -384,7 +307,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByItem_OwnerAndStatus(booker, Status.WAITING, PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "start"))))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUsersItemsBookings(0, 2, 2L, "WAITING");
 
@@ -393,13 +316,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUsersItemsBookingsSuccessRejected() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -407,7 +323,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByItem_OwnerAndStatus(booker, Status.REJECTED, PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "start"))))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUsersItemsBookings(0, 2, 2L, "REJECTED");
 
@@ -416,13 +332,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUsersItemsBookingsSuccessAll() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -430,7 +339,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByItem_Owner(booker, PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "start"))))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUsersItemsBookings(0, 2, 2L, "ALL");
 
@@ -458,13 +367,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUserBookingsSuccessCurrent() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -472,7 +374,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByBookerAndStartBeforeAndEndAfter(Mockito.any(User.class), Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUserBookings(0, 2, 2L, "CURRENT");
 
@@ -481,13 +383,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUserBookingsSuccessPast() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -495,7 +390,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByBookerAndEndBefore(Mockito.any(User.class), Mockito.any(LocalDateTime.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUserBookings(0, 2, 2L, "PAST");
 
@@ -504,13 +399,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUserBookingsSuccessFuture() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -518,7 +406,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByBookerAndStartAfter(Mockito.any(User.class), Mockito.any(LocalDateTime.class), Mockito.any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUserBookings(0, 2, 2L, "FUTURE");
 
@@ -527,13 +415,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUserBookingsSuccessWaiting() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -541,7 +422,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByBookerAndStatus(booker, Status.WAITING, PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "start"))))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUserBookings(0, 2, 2L, "WAITING");
 
@@ -550,13 +431,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUserBookingsSuccessRejected() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -564,7 +438,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByBookerAndStatus(booker, Status.REJECTED, PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "start"))))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUserBookings(0, 2, 2L, "REJECTED");
 
@@ -573,13 +447,6 @@ class BookingServiceTest {
 
     @Test
     void getAllUserBookingsSuccessAll() {
-        User owner = new User();
-        owner.setId(1L);
-        User booker = new User();
-        booker.setId(2L);
-        Item item = new Item();
-        item.setId(1L);
-        item.setOwner(owner);
         Booking booking = new Booking();
         booking.setStatus(Status.APPROVED);
         booking.setId(1L);
@@ -587,7 +454,7 @@ class BookingServiceTest {
         booking.setBooker(booker);
         Mockito.when(userRepository.findById(2L)).thenReturn(Optional.of(booker));
         Mockito.when(bookingRepository.findByBooker(booker, PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "start"))))
-                .thenReturn(new PageImpl<>(List.of(booking)));
+                .thenReturn(List.of(booking));
 
         var result = bookingService.getAllUserBookings(0, 2, 2L, "ALL");
 
@@ -611,9 +478,5 @@ class BookingServiceTest {
         var result = assertThrows(LockedException.class,
                 () -> bookingService.getAllUserBookings(0, 2, 2L, "INCORRECT"));
         assertEquals("Unknown state: UNSUPPORTED_STATUS", result.getMessage());
-    }
-
-    @Test
-    void getAllUsersItemsBookings() {
     }
 }

@@ -79,7 +79,7 @@ public class ItemService {
     public List<ItemDto> getUserItems(int from, int size, long owner) {
         User user = userRepository.findById(owner).orElseThrow(() -> new ConflictException("No such user was found"));
         PageRequest pageRequest = PageRequest.of(from, size);
-        var items = itemRepository.findByOwner(user, pageRequest).toList();
+        var items = itemRepository.findByOwner(user, pageRequest);
 
         Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartLessThanEqualAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
                 .map(bookingMapper::toDTO)
@@ -124,7 +124,7 @@ public class ItemService {
             return Collections.emptyList();
         }
         PageRequest pageRequest = PageRequest.of(from, size);
-        var items = itemRepository.findByText(text, pageRequest).toList();
+        var items = itemRepository.findByText(text, pageRequest);
         Map<Long, List<CommentDto>> comments = commentRepository.findByItemIn(items)
                 .stream()
                 .sorted(Comparator.comparingLong(it -> it.getCreated().toInstant(ZoneOffset.UTC).toEpochMilli()))

@@ -28,6 +28,8 @@ class BookingControllerTestMvc {
     @MockBean
     private BookingService bookingService;
 
+    private static final String USER_ID = "1";
+
     @SneakyThrows
     @Test
     void addBookingTestSuccess() {
@@ -37,7 +39,7 @@ class BookingControllerTestMvc {
         BookingDto dto = new BookingDto();
         Mockito.when(bookingService.addBooking(bookingIncome, 1L)).thenReturn(dto);
 
-        var res = mockMvc.perform(MockMvcRequestBuilders.post("/bookings").header("X-Sharer-User-Id", "1")
+        var res = mockMvc.perform(MockMvcRequestBuilders.post("/bookings").header("X-Sharer-User-Id", USER_ID)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(bookingIncome)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -57,7 +59,7 @@ class BookingControllerTestMvc {
         BookingDto dto = new BookingDto();
         Mockito.when(bookingService.addBooking(bookingIncome, 1L)).thenReturn(dto);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/bookings").header("X-Sharer-User-Id", "1")
+        mockMvc.perform(MockMvcRequestBuilders.post("/bookings").header("X-Sharer-User-Id", USER_ID)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(bookingIncome)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
@@ -66,7 +68,7 @@ class BookingControllerTestMvc {
     @SneakyThrows
     @Test
     void approveBooking() {
-        mockMvc.perform(MockMvcRequestBuilders.patch("/bookings/{bookingId}?approved=true", 1L).header("X-Sharer-User-Id", "1"))
+        mockMvc.perform(MockMvcRequestBuilders.patch("/bookings/{bookingId}?approved=true", 1L).header("X-Sharer-User-Id", USER_ID))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
         Mockito.verify(bookingService).approveBooking(1L, true, 1L);
@@ -75,7 +77,7 @@ class BookingControllerTestMvc {
     @SneakyThrows
     @Test
     void getBooking() {
-        mockMvc.perform(MockMvcRequestBuilders.get("/bookings/{bookingId}", 1L).header("X-Sharer-User-Id", "1"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/bookings/{bookingId}", 1L).header("X-Sharer-User-Id", USER_ID))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
         Mockito.verify(bookingService).getBooking(1L, 1L);
@@ -84,7 +86,7 @@ class BookingControllerTestMvc {
     @SneakyThrows
     @Test
     void getAllBookings() {
-        mockMvc.perform(MockMvcRequestBuilders.get("/bookings?from=1&size=2&state=ALL", 1L).header("X-Sharer-User-Id", "1"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/bookings?from=1&size=2&state=ALL", 1L).header("X-Sharer-User-Id", USER_ID))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
         Mockito.verify(bookingService).getAllUserBookings(1, 2, 1L, "ALL");
@@ -93,7 +95,7 @@ class BookingControllerTestMvc {
     @SneakyThrows
     @Test
     void getAllBookingsByOwner() {
-        mockMvc.perform(MockMvcRequestBuilders.get("/bookings/owner?from=1&size=2&state=ALL", 1L).header("X-Sharer-User-Id", "1"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/bookings/owner?from=1&size=2&state=ALL", 1L).header("X-Sharer-User-Id", USER_ID))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
         Mockito.verify(bookingService).getAllUsersItemsBookings(1, 2, 1L, "ALL");
