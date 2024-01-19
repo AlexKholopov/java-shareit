@@ -22,7 +22,7 @@ public class TestUserRepository {
     private UserRepository userRepository;
 
     @Test
-    public void TestFindByEmail() {
+    public void testFindByEmail() {
         User user = new User();
         user.setName("Name");
         user.setEmail("email2@email.com");
