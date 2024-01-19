@@ -1,4 +1,4 @@
-package ru.practicum.shareit.user.service;
+package ru.practicum.shareit.request.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,75 +22,61 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
 @ExtendWith(SpringExtension.class)
-public class TestItemRepository {
-
+public class TestItemRequestRepository {
     @Autowired
     private TestEntityManager em;
     @Autowired
-    private ItemRepository repository;
+    private ItemRepository itemRepository;
     @Autowired
     private UserRepository userRepository;
     @Autowired
     private ItemRequestRepository itemRequestRepository;
+    private PageRequest pageRequest = PageRequest.of(0, 3);
+    private ItemRequest itemRequest;
     private User owner;
+    private User user;
     private Item item;
 
     @BeforeEach
     void prepare() {
         owner = new User();
-        item = new Item();
         owner.setName("Name");
         owner.setEmail("email@email.com");
 
+        user = new User();
+        user.setName("Name");
+        user.setEmail("email2@email.com");
+
+        item = new Item();
         item.setOwner(owner);
         item.setName("Отвертка");
         item.setDescription("Крутая отвертка");
         item.setAvailable(true);
-    }
 
-    @Test
-    void testFindByText() {
-        var expectesList = List.of(item);
-
-        userRepository.save(owner);
-        repository.save(item);
-
-        PageRequest pageRequest = PageRequest.of(0, 3);
-        var res = repository.findByText("отв", pageRequest);
-
-        assertEquals(expectesList, res);
-    }
-
-    @Test
-    void testFindByOwner() {
-        var expectesList = List.of(item);
+        itemRequest = new ItemRequest();
+        itemRequest.setDescription("Description");
+        itemRequest.setOwner(owner);
+        itemRequest.setCreated(LocalDateTime.now());
 
         userRepository.save(owner);
-        repository.save(item);
-
-        PageRequest pageRequest = PageRequest.of(0, 3);
-        var res = repository.findByOwner(owner, pageRequest);
-
-        assertEquals(expectesList, res);
-    }
-
-    @Test
-    void testFindByRequestIn() {
-        User user = new User();
-        user.setName("Name");
-        user.setEmail("email2@email.com");
         userRepository.save(user);
-        userRepository.save(owner);
-        ItemRequest request = new ItemRequest();
-        request.setCreated(LocalDateTime.now());
-        request.setOwner(user);
-        request.setDescription("Description");
-        itemRequestRepository.save(request);
-        item.setRequest(request);
-        repository.save(item);
+        itemRepository.save(item);
+        itemRequestRepository.save(itemRequest);
+    }
 
-        var res = repository.findByRequestIn(List.of(request));
+    @Test
+    public void testFindByOwnerNot() {
+        var expectedRequests = List.of(itemRequest);
+        var res = itemRequestRepository.findByOwnerNot(user, pageRequest);
 
-        assertEquals(List.of(item), res);
+        assertEquals(expectedRequests, res);
+    }
+
+    @Test
+    public void testFindByOwner() {
+        var expectedRequests = List.of(itemRequest);
+        var res = itemRequestRepository.findByOwner(owner);
+
+        assertEquals(expectedRequests, res);
     }
 }
