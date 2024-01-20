@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.Entity;
@@ -39,6 +40,10 @@ public class Item {
     private String description;
 
     private Boolean available;
+
+    @ManyToOne()
+    @JoinColumn(name = "request_id")
+    private ItemRequest request;
 
     @Override
     public final boolean equals(Object o) {

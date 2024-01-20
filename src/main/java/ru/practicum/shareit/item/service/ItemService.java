@@ -2,16 +2,17 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingForItem;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.service.BookingMapper;
+import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NoAuthorizationException;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.CommentDto;
@@ -20,6 +21,8 @@ import ru.practicum.shareit.item.model.dto.ItemDto;
 import ru.practicum.shareit.item.model.dto.ItemIncome;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -30,7 +33,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -46,19 +48,22 @@ public class ItemService {
     private final CommentMapper commentMapper;
     private final ItemMapper itemMapper;
     private final BookingMapper bookingMapper;
+    private final ItemRequestRepository itemRequestRepository;
 
     public ItemDto createItem(ItemIncome itemIncome, long owner) {
         User user = userRepository.findById(owner).orElseThrow(() -> new NotFoundException("No such owner was found"));
-        Item item = itemRepository.save(itemMapper.toModel(itemIncome, user));
+        Item item;
+        if (itemIncome.getRequestId() != null) {
+            ItemRequest itemRequest = itemRequestRepository.findById(itemIncome.getRequestId()).orElseThrow(() -> new NotFoundException("No such request was found"));
+            item = itemRepository.save(itemMapper.toModel(itemIncome, user, itemRequest));
+        } else {
+            item = itemRepository.save(itemMapper.toModel(itemIncome, user));
+        }
         return itemMapper.toDTO(item, Collections.emptyList());
     }
 
     public ItemDto updateItem(ItemIncome itemIncome, long owner) {
-        Optional<Item> maybeItem = itemRepository.findById(itemIncome.getId());
-        if (maybeItem.isEmpty()) {
-            throw new NotFoundException("No such item was found");
-        }
-        Item item = maybeItem.get();
+        Item item = itemRepository.findById(itemIncome.getId()).orElseThrow(() -> new NotFoundException("No such item was found"));
         if (item.getOwner().getId() != owner) {
             log.error("Unauthorized update attempt");
             throw new NoAuthorizationException("You do not have authorization to update the object");
@@ -71,9 +76,10 @@ public class ItemService {
         return itemMapper.toDTO(item1, comments);
     }
 
-    public List<ItemDto> getUserItems(long owner) {
-        User user = userRepository.findById(owner).orElseThrow(() -> new ValidationException("No such user was found"));
-        var items = itemRepository.findByOwner(user);
+    public List<ItemDto> getUserItems(int from, int size, long owner) {
+        User user = userRepository.findById(owner).orElseThrow(() -> new ConflictException("No such user was found"));
+        PageRequest pageRequest = PageRequest.of(from, size);
+        var items = itemRepository.findByOwner(user, pageRequest);
 
         Map<Long, List<BookingDto>> map = bookingRepository.findByItemInAndStartLessThanEqualAndStatus(items, LocalDateTime.now(), Status.APPROVED).stream()
                 .map(bookingMapper::toDTO)
@@ -112,12 +118,13 @@ public class ItemService {
         return itemsDto;
     }
 
-    public List<ItemDto> searchItems(String text) {
+    public List<ItemDto> searchItems(int from, int size, String text) {
         if (text.isBlank()) {
             log.info("Empty search request");
             return Collections.emptyList();
         }
-        var items = itemRepository.findByText(text);
+        PageRequest pageRequest = PageRequest.of(from, size);
+        var items = itemRepository.findByText(text, pageRequest);
         Map<Long, List<CommentDto>> comments = commentRepository.findByItemIn(items)
                 .stream()
                 .sorted(Comparator.comparingLong(it -> it.getCreated().toInstant(ZoneOffset.UTC).toEpochMilli()))
@@ -160,9 +167,12 @@ public class ItemService {
         if (!exists) {
             throw new LockedException("No bookings by that user was found");
         }
+        if (item.getOwner().getId() == userId) {
+            throw new LockedException("You can't comment your item");
+        }
         Comment comment = commentMapper.fromIncome(commentIncome, user, item, null);
         comment.setCreated(LocalDateTime.now());
-        commentRepository.save(comment);
+        comment = commentRepository.save(comment);
         return commentMapper.toDTO(comment);
     }
 }

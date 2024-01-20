@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
@@ -11,6 +12,7 @@ import ru.practicum.shareit.booking.model.dto.BookingIncome;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.LockedException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemMapper;
@@ -80,7 +82,10 @@ public class BookingService {
         }
     }
 
-    public List<BookingDto> getAllUserBookings(long userId, String stateStr) {
+    public List<BookingDto> getAllUserBookings(int from, int size, long userId, String stateStr) {
+        if (from < 0 || size < 0) {
+            throw new ValidationException("Incorrect page query");
+        }
         User booker = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("No such user was found"));
         State state;
         try {
@@ -88,32 +93,37 @@ public class BookingService {
         } catch (IllegalArgumentException e) {
             throw new LockedException("Unknown state: UNSUPPORTED_STATUS");
         }
+        int page = from % size > 0 ? (from / size) + 1 : from / size;
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "start"));
         List<Booking> bookings = List.of();
         switch (state) {
             case CURRENT:
-                bookings = bookingRepository.findByBookerAndStartBeforeAndEndAfter(booker, LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByBookerAndStartBeforeAndEndAfter(booker, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
                 break;
             case PAST:
-                bookings = bookingRepository.findByBookerAndEndBefore(booker, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByBookerAndEndBefore(booker, LocalDateTime.now(), pageRequest);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByBookerAndStartAfter(booker, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByBookerAndStartAfter(booker, LocalDateTime.now(), pageRequest);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByBookerAndStatus(booker, Status.WAITING, Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByBookerAndStatus(booker, Status.WAITING, pageRequest);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByBookerAndStatus(booker, Status.REJECTED, Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByBookerAndStatus(booker, Status.REJECTED, pageRequest);
                 break;
             case ALL:
-                bookings = bookingRepository.findByBooker(booker, Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByBooker(booker, pageRequest);
                 break;
 
         }
         return bookings.stream().map(bookingMapper::toDTO).collect(Collectors.toList());
     }
 
-    public List<BookingDto> getAllUsersItemsBookings(long ownerId, String stateStr) {
+    public List<BookingDto> getAllUsersItemsBookings(int from, int size, long ownerId, String stateStr) {
+        if (from < 0 || size < 0) {
+            throw new ValidationException("Incorrect page query");
+        }
         User user = userRepository.findById(ownerId).orElseThrow(() -> new NotFoundException("No such user was found"));
         State state;
         try {
@@ -121,25 +131,26 @@ public class BookingService {
         } catch (IllegalArgumentException e) {
             throw new LockedException("Unknown state: UNSUPPORTED_STATUS");
         }
+        PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Direction.DESC, "start"));
         List<Booking> bookings = List.of();
         switch (state) {
             case CURRENT:
-                bookings = bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(), LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByItem_OwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(), LocalDateTime.now(), pageRequest);
                 break;
             case PAST:
-                bookings = bookingRepository.findByItem_OwnerAndEndBefore(user, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByItem_OwnerAndEndBefore(user, LocalDateTime.now(), pageRequest);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByItem_OwnerAndStartAfter(user, LocalDateTime.now(), Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByItem_OwnerAndStartAfter(user, LocalDateTime.now(), pageRequest);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.WAITING, Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.WAITING, pageRequest);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.REJECTED, Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByItem_OwnerAndStatus(user, Status.REJECTED, pageRequest);
                 break;
             case ALL:
-                bookings = bookingRepository.findByItem_Owner(user, Sort.by(Sort.Direction.DESC, "start"));
+                bookings = bookingRepository.findByItem_Owner(user, pageRequest);
                 break;
         }
         return bookings.stream().map(bookingMapper::toDTO).collect(Collectors.toList());
@@ -147,7 +158,7 @@ public class BookingService {
 
     private void checkValidBookingTime(BookingIncome bookingIncome) {
         if (bookingIncome.getEnd().isBefore(bookingIncome.getStart()) || bookingIncome.getStart().isEqual(bookingIncome.getEnd())) {
-            throw new LockedException("Wrong time");
+            throw new ValidationException("Wrong time");
         }
     }
 }

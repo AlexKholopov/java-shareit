@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingIncome;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.utils.Header;
+import ru.practicum.shareit.utils.ConstantUtils;
 import ru.practicum.shareit.utils.Marker;
 
 import javax.validation.Valid;
@@ -29,30 +29,34 @@ public class BookingController {
 
     @PostMapping
     @Validated(Marker.OnCreate.class)
-    public BookingDto addBooking(@RequestBody @Valid BookingIncome bookingIncome, @RequestHeader(Header.USER_ID) long user) {
+    public BookingDto addBooking(@RequestBody @Valid BookingIncome bookingIncome, @RequestHeader(ConstantUtils.USER_ID) long user) {
         return bookingService.addBooking(bookingIncome, user);
     }
 
     @PatchMapping("/{bookingId}")
     public BookingDto approveBooking(@PathVariable long bookingId, @RequestParam boolean approved,
-                                     @RequestHeader(Header.USER_ID) long user) {
+                                     @RequestHeader(ConstantUtils.USER_ID) long user) {
         return bookingService.approveBooking(bookingId, approved, user);
     }
 
     @GetMapping("/{bookingId}")
-    public BookingDto getBooking(@RequestHeader(Header.USER_ID) long user, @PathVariable long bookingId) {
+    public BookingDto getBooking(@RequestHeader(ConstantUtils.USER_ID) long user, @PathVariable long bookingId) {
         return bookingService.getBooking(user, bookingId);
     }
 
     @GetMapping
-    public List<BookingDto> getAllBookings(@RequestHeader(Header.USER_ID) long user,
+    public List<BookingDto> getAllBookings(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
+                                           @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
+                                           @RequestHeader(ConstantUtils.USER_ID) long user,
                                            @RequestParam(defaultValue = "ALL") String state) {
-        return bookingService.getAllUserBookings(user, state);
+        return bookingService.getAllUserBookings(from, size, user, state);
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> getAllBookingsByOwner(@RequestHeader(Header.USER_ID) long user,
+    public List<BookingDto> getAllBookingsByOwner(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
+                                                  @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
+                                                  @RequestHeader(ConstantUtils.USER_ID) long user,
                                                   @RequestParam(defaultValue = "ALL") String state) {
-        return bookingService.getAllUsersItemsBookings(user, state);
+        return bookingService.getAllUsersItemsBookings(from, size, user, state);
     }
 }

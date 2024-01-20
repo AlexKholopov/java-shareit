@@ -3,8 +3,8 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.model.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -26,8 +26,8 @@ public class UserService {
 
     public UserDto updateUser(UserDto user, long id) {
         if (id < 1) {
-            log.error("Wrong user id - {}", user.getId());
-            throw new ValidationException("User id must be positive");
+            log.error("Wrong user id - {}", id);
+            throw new ConflictException("User id must be positive");
         }
         User oldUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("No such user was found"));
         user.setId(id);
