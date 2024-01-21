@@ -11,7 +11,6 @@ import ru.practicum.shareit.exceptions.NoAuthorizationException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 
-import javax.validation.ConstraintViolationException;
 import java.util.Map;
 
 @Slf4j
@@ -39,7 +38,7 @@ public class ErrorHandler {
         return Map.of("error", e.getMessage());
     }
 
-    @ExceptionHandler({LockedException.class, ConstraintViolationException.class, ValidationException.class})
+    @ExceptionHandler({LockedException.class, ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> bedRequestException(final Exception e) {
         log.error(e.getMessage(), e);
