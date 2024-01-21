@@ -19,7 +19,6 @@ import ru.practicum.shareit.booking.dto.BookingState;
 import ru.practicum.shareit.utils.ConstantUtils;
 import ru.practicum.shareit.utils.Marker;
 
-import javax.validation.Valid;
 import javax.validation.constraints.PositiveOrZero;
 
 @Controller
@@ -31,8 +30,7 @@ public class BookingController {
     private final BookingClient bookingClient;
 
     @PostMapping
-    @Validated(Marker.OnCreate.class)
-    public ResponseEntity<Object> addBooking(@RequestBody @Valid BookingIncome bookingIncome,
+    public ResponseEntity<Object> addBooking(@RequestBody @Validated(Marker.OnCreate.class) BookingIncome bookingIncome,
                                              @RequestHeader(ConstantUtils.USER_ID) long user) {
         return bookingClient.bookItem(user, bookingIncome);
     }
