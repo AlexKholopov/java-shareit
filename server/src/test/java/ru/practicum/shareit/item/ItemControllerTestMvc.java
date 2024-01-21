@@ -50,6 +50,7 @@ class ItemControllerTestMvc {
         assertEquals(objectMapper.writeValueAsString(dto), res);
     }
 
+    /*
     @SneakyThrows
     @Test
     void createItemFailValidation() {
@@ -64,6 +65,8 @@ class ItemControllerTestMvc {
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
+
+     */
 
     @SneakyThrows
     @Test

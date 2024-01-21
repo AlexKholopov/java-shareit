@@ -10,8 +10,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.model.UserId;
 import ru.practicum.shareit.user.model.dto.UserDto;
+import ru.practicum.shareit.user.model.dto.UserId;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;

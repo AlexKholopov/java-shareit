@@ -14,7 +14,6 @@ import ru.practicum.shareit.request.model.dto.ItemRequestInput;
 import ru.practicum.shareit.request.service.ItemRequestService;
 import ru.practicum.shareit.utils.ConstantUtils;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -24,7 +23,8 @@ public class ItemRequestController {
     private final ItemRequestService service;
 
     @PostMapping
-    public ItemRequestDto createRequest(@Valid @RequestBody ItemRequestInput itemRequestInput, @RequestHeader(ConstantUtils.USER_ID) long user) {
+    public ItemRequestDto createRequest(@RequestBody ItemRequestInput itemRequestInput,
+                                        @RequestHeader(ConstantUtils.USER_ID) long user) {
         return service.createRequest(itemRequestInput, user);
     }
 
@@ -41,7 +41,8 @@ public class ItemRequestController {
     }
 
     @GetMapping("/{id}")
-    public ItemRequestDto getById(@PathVariable long id, @RequestHeader(ConstantUtils.USER_ID) long user) {
+    public ItemRequestDto getById(@PathVariable long id,
+                                  @RequestHeader(ConstantUtils.USER_ID) long user) {
         return service.getById(user, id);
     }
 }

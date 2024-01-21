@@ -44,7 +44,7 @@ class UserControllerTestMvc {
 
         assertEquals(objectMapper.writeValueAsString(user), res);
     }
-
+/*
     @SneakyThrows
     @Test
     void createUserTestValidationFail() {
@@ -59,7 +59,7 @@ class UserControllerTestMvc {
         Mockito.verify(userService, Mockito.never()).createUser(user);
     }
 
-    @SneakyThrows
+  /*  @SneakyThrows
     @Test
     void updateUserFailValidation() {
         long userId = 1L;
@@ -73,6 +73,8 @@ class UserControllerTestMvc {
 
         Mockito.verify(userService, Mockito.never()).updateUser(userInput, userId);
     }
+
+ */
 
     @SneakyThrows
     @Test

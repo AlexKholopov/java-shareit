@@ -4,8 +4,8 @@ import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.model.UserId;
 import ru.practicum.shareit.user.model.dto.UserDto;
+import ru.practicum.shareit.user.model.dto.UserId;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface UserMapper {

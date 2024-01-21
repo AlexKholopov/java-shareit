@@ -21,7 +21,10 @@ public class UserService {
     private final UserMapper userMapper;
 
     public UserDto createUser(UserDto user) {
-        return userMapper.toDto(userRepository.save(userMapper.fromDto(user)));
+        var userToSave = userMapper.fromDto(user);
+        var savedUser = userRepository.save(userToSave);
+        var res = userMapper.toDto(savedUser);
+        return res;
     }
 
     public UserDto updateUser(UserDto user, long id) {

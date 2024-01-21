@@ -17,7 +17,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.model.UserId;
+import ru.practicum.shareit.user.model.dto.UserId;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -87,12 +87,7 @@ public class BookingService {
             throw new ValidationException("Incorrect page query");
         }
         User booker = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("No such user was found"));
-        State state;
-        try {
-            state = State.valueOf(stateStr);
-        } catch (IllegalArgumentException e) {
-            throw new LockedException("Unknown state: UNSUPPORTED_STATUS");
-        }
+        State state = State.valueOf(stateStr);
         int page = from % size > 0 ? (from / size) + 1 : from / size;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "start"));
         List<Booking> bookings = List.of();
@@ -125,12 +120,7 @@ public class BookingService {
             throw new ValidationException("Incorrect page query");
         }
         User user = userRepository.findById(ownerId).orElseThrow(() -> new NotFoundException("No such user was found"));
-        State state;
-        try {
-            state = State.valueOf(stateStr);
-        } catch (IllegalArgumentException e) {
-            throw new LockedException("Unknown state: UNSUPPORTED_STATUS");
-        }
+        State state = State.valueOf(stateStr);
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Direction.DESC, "start"));
         List<Booking> bookings = List.of();
         switch (state) {

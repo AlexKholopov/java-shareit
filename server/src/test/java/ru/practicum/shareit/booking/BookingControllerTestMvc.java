@@ -50,6 +50,8 @@ class BookingControllerTestMvc {
         assertEquals(objectMapper.writeValueAsString(dto), res);
     }
 
+
+    /*
     @SneakyThrows
     @Test
     void addBookingTestFailValidation() {
@@ -64,6 +66,8 @@ class BookingControllerTestMvc {
                         .content(objectMapper.writeValueAsString(bookingIncome)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
+
+     */
 
     @SneakyThrows
     @Test

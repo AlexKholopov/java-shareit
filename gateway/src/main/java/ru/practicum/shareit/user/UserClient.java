@@ -10,6 +10,8 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.shareit.client.BaseClient;
 import ru.practicum.shareit.user.dto.UserDto;
 
+import java.util.Map;
+
 @Service
 public class UserClient extends BaseClient {
     private static final String API_PREFIX = "/users";
@@ -27,15 +29,24 @@ public class UserClient extends BaseClient {
     }
 
     public ResponseEntity<Object> updateUser(UserDto userDto, long userId) {
-        return patch("/{userId}", userId, userDto);
+        Map<String, Object> parameters = Map.of(
+                "userId", userId
+        );
+        return patch("/{userId}", userId, parameters, userDto);
     }
 
     public ResponseEntity<Object> deleteUserById(long userId) {
-        return delete("", userId);
+        Map<String, Object> parameters = Map.of(
+                "userId", userId
+        );
+        return delete("/{userId}", userId, parameters);
     }
 
     public ResponseEntity<Object> getUserById(long userId) {
-        return get("", userId);
+        Map<String, Object> parameters = Map.of(
+                "userId", userId
+        );
+        return get("/{userId}", userId, parameters);
     }
 
     public ResponseEntity<Object> getUsers() {

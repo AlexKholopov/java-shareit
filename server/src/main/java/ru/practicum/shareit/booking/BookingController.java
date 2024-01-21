@@ -17,19 +17,17 @@ import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.utils.ConstantUtils;
 import ru.practicum.shareit.utils.Marker;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/bookings")
-@Validated
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
     @Validated(Marker.OnCreate.class)
-    public BookingDto addBooking(@RequestBody @Valid BookingIncome bookingIncome, @RequestHeader(ConstantUtils.USER_ID) long user) {
+    public BookingDto addBooking(@RequestBody BookingIncome bookingIncome, @RequestHeader(ConstantUtils.USER_ID) long user) {
         return bookingService.addBooking(bookingIncome, user);
     }
 

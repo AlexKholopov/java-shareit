@@ -7,7 +7,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.dto.BookingDto;
 import ru.practicum.shareit.booking.model.dto.BookingIncome;
 import ru.practicum.shareit.item.model.dto.ItemShort;
-import ru.practicum.shareit.user.model.UserId;
+import ru.practicum.shareit.user.model.dto.UserId;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface BookingMapper {

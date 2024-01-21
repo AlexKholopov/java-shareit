@@ -19,6 +19,7 @@ import ru.practicum.shareit.utils.ConstantUtils;
 import ru.practicum.shareit.utils.Marker;
 
 import javax.validation.Valid;
+import javax.validation.constraints.PositiveOrZero;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,20 +45,20 @@ public class ItemController {
             log.info("Item assigned an id - {} from the path", itemId);
             itemIncome.setId(itemId);
         }
-        return itemClient.updateItem(itemIncome, owner);
+        return itemClient.updateItem(itemIncome, owner, itemId);
     }
 
     @GetMapping
-    public ResponseEntity<Object> getUsersItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
-                                                @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
+    public ResponseEntity<Object> getUsersItems(@PositiveOrZero @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
+                                                @PositiveOrZero @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
                                                 @RequestHeader(ConstantUtils.USER_ID) long owner) {
         log.info("Requested all user {} items", owner);
         return itemClient.getUserItems(from, size, owner);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Object> searchItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
-                                              @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
+    public ResponseEntity<Object> searchItems(@PositiveOrZero @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
+                                              @PositiveOrZero @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
                                               @RequestParam String text) {
         log.info("Requested items like {}", text.toLowerCase());
         return itemClient.searchItems(from, size, text);
@@ -75,6 +76,6 @@ public class ItemController {
                                              @PathVariable long itemId,
                                              @RequestBody @Valid CommentIncome commentIncome) {
         log.info("requested add comment for item {} by user {}", itemId, user);
-        return itemClient.addComment(itemId, user, commentIncome);
+        return itemClient.addComment(user, itemId, commentIncome);
     }
 }

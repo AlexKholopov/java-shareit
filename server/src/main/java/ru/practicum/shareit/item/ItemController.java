@@ -2,7 +2,6 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,27 +17,25 @@ import ru.practicum.shareit.item.model.dto.ItemDto;
 import ru.practicum.shareit.item.model.dto.ItemIncome;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.utils.ConstantUtils;
-import ru.practicum.shareit.utils.Marker;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@Validated
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ItemDto createItem(@RequestBody @Validated(Marker.OnCreate.class) ItemIncome itemIncome, @RequestHeader(ConstantUtils.USER_ID) long owner) {
+    public ItemDto createItem(@RequestBody ItemIncome itemIncome,
+                              @RequestHeader(ConstantUtils.USER_ID) long owner) {
         log.info("Requested creating item");
         return itemService.createItem(itemIncome, owner);
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateItem(@RequestBody @Validated(Marker.OnUpdate.class) ItemIncome itemIncome,
+    public ItemDto updateItem(@RequestBody ItemIncome itemIncome,
                               @RequestHeader(ConstantUtils.USER_ID) long owner,
                               @PathVariable long itemId) {
         log.info("Requested item with id {} update", itemIncome.getId());
@@ -50,25 +47,32 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getUsersItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from, @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size, @RequestHeader(ConstantUtils.USER_ID) long owner) {
+    public List<ItemDto> getUsersItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
+                                       @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
+                                       @RequestHeader(ConstantUtils.USER_ID) long owner) {
         log.info("Requested all user {} items", owner);
         return itemService.getUserItems(from, size, owner);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from, @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size, @RequestParam String text) {
+    public List<ItemDto> searchItems(@RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_FROM) int from,
+                                     @RequestParam(required = false, defaultValue = ConstantUtils.DEFAULT_SIZE) int size,
+                                     @RequestParam String text) {
         log.info("Requested items like {}", text.toLowerCase());
         return itemService.searchItems(from, size, text);
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getItemById(@RequestHeader(ConstantUtils.USER_ID) long user, @PathVariable long itemId) {
+    public ItemDto getItemById(@RequestHeader(ConstantUtils.USER_ID) long user,
+                               @PathVariable long itemId) {
         log.info("Requested item with id {}", itemId);
         return itemService.getItemById(itemId, user);
     }
 
     @PostMapping("/{itemId}/comment")
-    public CommentDto addComment(@RequestHeader(ConstantUtils.USER_ID) long user, @PathVariable long itemId, @RequestBody @Valid CommentIncome commentIncome) {
+    public CommentDto addComment(@RequestHeader(ConstantUtils.USER_ID) long user,
+                                 @PathVariable long itemId,
+                                 @RequestBody CommentIncome commentIncome) {
         log.info("requested add comment for item {} by user {}", itemId, user);
         return itemService.addComment(itemId, user, commentIncome);
     }
