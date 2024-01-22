@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: shareit-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SHAREIT_SERVER_URL=http://server:9090
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: shareit-server
+    ports:
+      - "9090:9090"
+    depends_on:
+      - db
+      - gateway
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
+      - spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL82Dialect
+      - spring.jpa.properties.hibernate.format_sql=true
+      - spring.sql.init.mode=always
+      - spring.config.activate.on-profile=ci, test
+      - spring.datasource.driverClassName=org.postgresql.Driver
+      - spring.datasource.username=root
+      - spring.datasource.password=root
+
+  db:
+    image: postgres:13.7-alpine
+    container_name: shareit-db-1
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      - POSTGRES_DB=shareit
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
